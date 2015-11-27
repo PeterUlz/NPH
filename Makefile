@@ -474,6 +474,12 @@ output/TSS_coverage/Blood_Top100/MYC_Blood_Top100_tss.txt: ./scripts/analyze_TSS
 	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Blood_Top100/MYC_Blood_Top100_tss.txt
 	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Blood_Top100/MYC_Blood_Top100_tss.txt
 
+#3.5 Apoptosis genes
+output/TSS_coverage/Apoptosis_genes/Merged_Male_Controls_Apoptosis_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -gl ref/Apoptosis_genes.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Male_Controls_trim60bp.sorted.bam -t 10 > output/TSS_coverage/Apoptosis_genes/Merged_Male_Controls_Apoptosis_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Apoptosis_genes/Merged_Male_Controls_Apoptosis_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Apoptosis_genes/Merged_Male_Controls_Apoptosis_tss.txt
+
 ####################################################################################################################################
 # 4
 # Analyze mean coverage around Transcription end sites (TES)
@@ -813,49 +819,69 @@ output/Single_Genes_Wig/Prostate_Cancer_AR_large_smoothed_1000bp.wig:
 
 
 #HBB
-output/Single_Genes_Wig/Merged_Female_Controls_HBB_large.wig:
-	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/Merged_Female_Controls_HBB_large.wig \
-    -s 100000 -e 100000 -b output/trimmed_reads/Merged_Female_Controls_trim60bp.sorted.bam -g HBB
-output/Single_Genes_Wig/Merged_Female_Controls_HBB_large_smoothed_400bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Merged_Female_Controls_HBB_large.wig -o output/Single_Genes_Wig/Merged_Female_Controls_HBB_large_smoothed_400bp.wig -w 400
-output/Single_Genes_Wig/Merged_Female_Controls_HBB_large_smoothed_1000bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Merged_Female_Controls_HBB_large.wig -o output/Single_Genes_Wig/Merged_Female_Controls_HBB_large_smoothed_1000bp.wig -w 1000
+output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBB_large.wig:
+	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBB_large.wig \
+    -s 100000 -e 100000 -b output/trimmed_reads/MergedControls.trimmed.bam -g HBB
+output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBB_large_gc_corr.wig:
+	./scripts/GC_correct_wig_file.py -w output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBB_large.wig -o output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBB_large_gc_corr.wig -fa ~/RefSeq/hg19_070510/hg19.fa -ws 300
+output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBB_large_smoothed_100bp.wig:
+	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBB_large.wig -o output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBB_large_smoothed_100bp.wig -w 100
+output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBB_large_smoothed_400bp.wig:
+	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBB_large.wig -o output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBB_large_smoothed_400bp.wig -w 400
+output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBB_large_smoothed_1000bp.wig:
+	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBB_large.wig -o output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBB_large_smoothed_1000bp.wig -w 1000
 
 #HBA2
-output/Single_Genes_Wig/Merged_Female_Controls_HBA2_large.wig:
-	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/Merged_Female_Controls_HBA2_large.wig \
-    -s 100000 -e 100000 -b output/trimmed_reads/Merged_Female_Controls_trim60bp.sorted.bam -g HBA2
-output/Single_Genes_Wig/Merged_Female_Controls_HBA2_large_smoothed_400bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Merged_Female_Controls_HBA2_large.wig -o output/Single_Genes_Wig/Merged_Female_Controls_HBA2_large_smoothed_400bp.wig -w 400
-output/Single_Genes_Wig/Merged_Female_Controls_HBA2_large_smoothed_1000bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Merged_Female_Controls_HBA2_large.wig -o output/Single_Genes_Wig/Merged_Female_Controls_HBA2_large_smoothed_1000bp.wig -w 1000
+output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA2_large.wig:
+	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA2_large.wig \
+    -s 100000 -e 100000 -b output/trimmed_reads/MergedControls.trimmed.bam -g HBA2
+output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA2_large_gc_corr.wig:
+	./scripts/GC_correct_wig_file.py -w output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA2_large.wig -o output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA2_large_gc_corr.wig -fa ~/RefSeq/hg19_070510/hg19.fa -ws 300
+output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA2_large_smoothed_100bp.wig:
+	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA2_large.wig -o output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA2_large_smoothed_100bp.wig -w 100
+output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA2_large_smoothed_400bp.wig:
+	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA2_large.wig -o output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA2_large_smoothed_400bp.wig -w 400
+output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA2_large_smoothed_1000bp.wig:
+	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA2_large.wig -o output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA2_large_smoothed_1000bp.wig -w 1000
 
 #HBA1
-output/Single_Genes_Wig/Merged_Female_Controls_HBA1_large.wig:
-	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/Merged_Female_Controls_HBA1_large.wig \
-    -s 100000 -e 100000 -b output/trimmed_reads/Merged_Female_Controls_trim60bp.sorted.bam -g HBA1
-output/Single_Genes_Wig/Merged_Female_Controls_HBA1_large_smoothed_400bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Merged_Female_Controls_HBA1_large.wig -o output/Single_Genes_Wig/Merged_Female_Controls_HBA1_large_smoothed_400bp.wig -w 400
-output/Single_Genes_Wig/Merged_Female_Controls_HBA1_large_smoothed_1000bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Merged_Female_Controls_HBA1_large.wig -o output/Single_Genes_Wig/Merged_Female_Controls_HBA1_large_smoothed_1000bp.wig -w 1000
+output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA1_large.wig:
+	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA1_large.wig \
+    -s 100000 -e 100000 -b output/trimmed_reads/MergedControls.trimmed.bam -g HBA1
+output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA1_large_gc_corr.wig:
+	./scripts/GC_correct_wig_file.py -w output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA1_large.wig -o output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA1_large_gc_corr.wig -fa ~/RefSeq/hg19_070510/hg19.fa -ws 300
+output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA1_large_smoothed_100bp.wig:
+	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA1_large.wig -o output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA1_large_smoothed_100bp.wig -w 100
+output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA1_large_smoothed_400bp.wig:
+	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA1_large.wig -o output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA1_large_smoothed_400bp.wig -w 400
+output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA1_large_smoothed_1000bp.wig:
+	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA1_large.wig -o output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA1_large_smoothed_1000bp.wig -w 1000
 
 #S100A9
-output/Single_Genes_Wig/Merged_Female_Controls_S100A9_large.wig:
-	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/Merged_Female_Controls_S100A9_large.wig \
-    -s 100000 -e 100000 -b output/trimmed_reads/Merged_Female_Controls_trim60bp.sorted.bam -g S100A9
-output/Single_Genes_Wig/Merged_Female_Controls_S100A9_large_smoothed_400bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Merged_Female_Controls_S100A9_large.wig -o output/Single_Genes_Wig/Merged_Female_Controls_S100A9_large_smoothed_400bp.wig -w 400
-output/Single_Genes_Wig/Merged_Female_Controls_S100A9_large_smoothed_1000bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Merged_Female_Controls_S100A9_large.wig -o output/Single_Genes_Wig/Merged_Female_Controls_S100A9_large_smoothed_1000bp.wig -w 1000
+output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_S100A9_large.wig:
+	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_S100A9_large.wig \
+    -s 100000 -e 100000 -b output/trimmed_reads/MergedControls.trimmed.bam -g S100A9
+output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_S100A9_large_gc_corr.wig:
+	./scripts/GC_correct_wig_file.py -w output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_S100A9_large.wig -o output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_S100A9_large_gc_corr.wig -fa ~/RefSeq/hg19_070510/hg19.fa -ws 300
+output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_S100A9_large_smoothed_100bp.wig:
+	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_S100A9_large.wig -o output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_S100A9_large_smoothed_100bp.wig -w 100
+output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_S100A9_large_smoothed_400bp.wig:
+	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_S100A9_large.wig -o output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_S100A9_large_smoothed_400bp.wig -w 400
+output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_S100A9_large_smoothed_1000bp.wig:
+	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_S100A9_large.wig -o output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_S100A9_large_smoothed_1000bp.wig -w 1000
 
 #FTL
-output/Single_Genes_Wig/Merged_Female_Controls_FTL_large.wig:
-	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/Merged_Female_Controls_FTL_large.wig \
-    -s 100000 -e 100000 -b output/trimmed_reads/Merged_Female_Controls_trim60bp.sorted.bam -g FTL
-output/Single_Genes_Wig/Merged_Female_Controls_FTL_large_smoothed_400bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Merged_Female_Controls_FTL_large.wig -o output/Single_Genes_Wig/Merged_Female_Controls_FTL_large_smoothed_400bp.wig -w 400
-output/Single_Genes_Wig/Merged_Female_Controls_FTL_large_smoothed_1000bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Merged_Female_Controls_FTL_large.wig -o output/Single_Genes_Wig/Merged_Female_Controls_FTL_large_smoothed_1000bp.wig -w 1000
+output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_FTL_large.wig:
+	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_FTL_large.wig \
+    -s 100000 -e 100000 -b output/trimmed_reads/MergedControls.trimmed.bam -g FTL
+output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_FTL_large_gc_corr.wig:
+	./scripts/GC_correct_wig_file.py -w output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_FTL_large.wig -o output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_FTL_large_gc_corr.wig -fa ~/RefSeq/hg19_070510/hg19.fa -ws 300
+output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_FTL_large_smoothed_100bp.wig:
+	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_FTL_large.wig -o output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_FTL_large_smoothed_100bp.wig -w 100
+output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_FTL_large_smoothed_400bp.wig:
+	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_FTL_large.wig -o output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_FTL_large_smoothed_400bp.wig -w 400
+output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_FTL_large_smoothed_1000bp.wig:
+	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_FTL_large.wig -o output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_FTL_large_smoothed_1000bp.wig -w 1000
 
 
 ####################################################################################################################################
