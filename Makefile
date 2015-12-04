@@ -50,6 +50,7 @@ tissue_specific: output/TSS_coverage/Breast_specific/MergedMale_Controls_Breast_
 ####################################################################################################################################
 # 1
 # Align Plasma Seq samples
+#  -) (trim reads to 60bp)
 #  -) align to hg19 (bwa mem)
 #  -) sample-level duplicate removal using samtools
 #  -) merge individual samples using samtools
@@ -66,7 +67,7 @@ output/alignments/Merged_Male_Controls_rmdup.bam:
 
 output/trimmed_reads/Merged_Male_Controls_rmdup_trimmed.bam:
 	for i in ./data/MaleControls/*.fastq.gz;do base=`basename $$i`;echo "working on $$i" ;sample=`echo $$base | sed s/\.fastq\.gz//`; \
-    zcat $$i | ./scripts/fastx_trimmer -Q33 -f 61 -m 120 -z -o ./intermediate/trimmed/MergedMale/$${base}.trimmed.fastq.gz; \
+    zcat $$i | ./scripts/fastx_trimmer -Q33 -f 53 -l 113 -z -o ./intermediate/trimmed/MergedMale/$${base}.trimmed.fastq.gz; \
     bwa mem -t 10 ~/RefSeq/hg19_070510/hg19 ./intermediate/trimmed/MergedMale/$${base}.trimmed.fastq.gz > intermediate/trimmed/MergedMale/$$sample.sam; \
     rm ./intermediate/trimmed/MergedMale/$${base}.trimmed.fastq.gz; \
 	~/Downloads/jre1.7.0/bin/java -Xmx4g -Djava.io.tmpdir=/tmp \
@@ -88,8 +89,8 @@ output/alignments/Merged_Female_Controls_rmdup.bam:
 
 output/trimmed_reads/Merged_Female_Controls_rmdup_trimmed.bam:
 	for i in ./data/FemaleControls/*.fastq.gz;do base=`basename $$i`;echo "working on $$i" ;sample=`echo $$base | sed s/\.fastq\.gz//`; \
-    zcat $$i | ./scripts/fastx_trimmer -Q33 -f 61 -m 120 -z -o ./intermediate/trimmed/MergedFemale/$${base}.trimmed.fastq.gz; \
-    bwa mem -t 8 ~/RefSeq/hg19_070510/hg19 ./intermediate/trimmed/MergedFemale/$${base}.trimmed.fastq.gz > intermediate/trimmed/MergedFemale/$$sample.sam; \
+    zcat $$i | ./scripts/fastx_trimmer -Q33 -f 53 -l 113 -m 113 -z -o ./intermediate/trimmed/MergedFemale/$${base}.trimmed.fastq.gz; \
+    bwa mem -t 10 ~/RefSeq/hg19_070510/hg19 ./intermediate/trimmed/MergedFemale/$${base}.trimmed.fastq.gz > intermediate/trimmed/MergedFemale/$$sample.sam; \
     rm ./intermediate/trimmed/MergedFemale/$${base}.trimmed.fastq.gz; \
 	~/Downloads/jre1.7.0/bin/java -Xmx4g -Djava.io.tmpdir=/tmp \
 	-jar ~/Software/SNP_calling/picard-tools-1.128/picard.jar SortSam \
@@ -97,6 +98,10 @@ output/trimmed_reads/Merged_Female_Controls_rmdup_trimmed.bam:
 	VALIDATION_STRINGENCY=LENIENT CREATE_INDEX=true; rm intermediate/trimmed/MergedFemale/$$sample.sam; \
 	samtools rmdup -s intermediate/trimmed/MergedFemale/$$sample.bam intermediate/trimmed/MergedFemale/$$sample.rmdup.bam;rm intermediate/trimmed/MergedFemale/$$sample.bam;rm intermediate/trimmed/MergedFemale/$$sample.bai;samtools index intermediate/trimmed/MergedFemale/$$sample.rmdup.bam; done
 	samtools merge -f output/trimmed_reads/Merged_Female_Controls_rmdup_trimmed.bam intermediate/trimmed/MergedFemale/*.rmdup.bam; samtools index output/trimmed_reads/Merged_Female_Controls_rmdup_trimmed.bam
+
+output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam:
+	samtools merge -f output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam output/trimmed_reads/Merged_Female_Controls_rmdup_trimmed.bam output/trimmed_reads/Merged_Male_Controls_rmdup_trimmed.bam
+	samtools index output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam
 
 #Large pool of ~320 samples
 output/alignments/Merged_Giant_Plasma_rmdup.bam:
@@ -121,6 +126,18 @@ output/alignments/BreastCancer_rmdup.bam:
 	samtools rmdup -s intermediate/Breast/$$sample.bam intermediate/Breast/$$sample.rmdup.bam;rm intermediate/Breast/$$sample.bam;rm intermediate/Breast/$$sample.bai;samtools index intermediate/Breast/$$sample.rmdup.bam; done
 	samtools merge -f output/alignments/BreastCancer_rmdup.bam intermediate/Breast/*.rmdup.bam; samtools index output/alignments/BreastCancer_rmdup.bam
 
+output/trimmed_reads/BreastCancer_rmdup_trimmed.bam:
+	for i in ./data/Breast/*.fastq.gz;do base=`basename $$i`;echo "working on $$i" ;sample=`echo $$base | sed s/\.fastq\.gz//`; \
+    zcat $$i | ./scripts/fastx_trimmer -Q33 -f 53 -l 113 -m 113 -z -o ./intermediate/trimmed/Breast/$${base}.trimmed.fastq.gz; \
+    bwa mem -t 10 ~/RefSeq/hg19_070510/hg19 ./intermediate/trimmed/Breast/$${base}.trimmed.fastq.gz > intermediate/trimmed/Breast/$$sample.sam; \
+    rm ./intermediate/trimmed/Breast/$${base}.trimmed.fastq.gz; \
+	~/Downloads/jre1.7.0/bin/java -Xmx4g -Djava.io.tmpdir=/tmp \
+	-jar ~/Software/SNP_calling/picard-tools-1.128/picard.jar SortSam \
+	SO=coordinate INPUT=intermediate/trimmed/Breast/$$sample.sam OUTPUT=intermediate/trimmed/Breast/$$sample.bam \
+	VALIDATION_STRINGENCY=LENIENT CREATE_INDEX=true; rm intermediate/trimmed/Breast/$$sample.sam; \
+	samtools rmdup -s intermediate/trimmed/Breast/$$sample.bam intermediate/trimmed/Breast/$$sample.rmdup.bam;rm intermediate/trimmed/Breast/$$sample.bam;rm intermediate/trimmed/Breast/$$sample.bai;samtools index intermediate/trimmed/Breast/$$sample.rmdup.bam; done
+	samtools merge -f output/trimmed_reads/BreastCancer_rmdup_trimmed.bam intermediate/trimmed/Breast/*.rmdup.bam; samtools index output/trimmed_reads/BreastCancer_rmdup_trimmed.bam
+
 #Prostate cancer samples
 output/alignments/ProstateCancer_rmdup.bam:
 	for i in ./data/Prostate/*.fastq.gz;do base=`basename $$i`;echo "working on $$i" ;sample=`echo $$base | sed s/\.fastq\.gz//`;bwa mem -t 10 ~/RefSeq/hg19_070510/hg19 $$i > intermediate/Prostate/$$sample.sam; \
@@ -130,6 +147,18 @@ output/alignments/ProstateCancer_rmdup.bam:
 	VALIDATION_STRINGENCY=LENIENT CREATE_INDEX=true; rm intermediate/Prostate/$$sample.sam; \
 	samtools rmdup -s intermediate/Prostate/$$sample.bam intermediate/Prostate/$$sample.rmdup.bam;rm intermediate/Prostate/$$sample.bam;rm intermediate/Prostate/$$sample.bai;samtools index intermediate/Prostate/$$sample.rmdup.bam; done
 	samtools merge -f output/alignments/ProstateCancer_rmdup.bam intermediate/Prostate/*.rmdup.bam; samtools index output/alignments/ProstateCancer_rmdup.bam
+
+output/trimmed_reads/ProstateCancer_rmdup_trimmed.bam:
+	for i in ./data/Prostate/*.fastq.gz;do base=`basename $$i`;echo "working on $$i" ;sample=`echo $$base | sed s/\.fastq\.gz//`; \
+    zcat $$i | ./scripts/fastx_trimmer -Q33 -f 53 -l 113 -m 113 -z -o ./intermediate/trimmed/Prostate/$${base}.trimmed.fastq.gz; \
+    bwa mem -t 10 ~/RefSeq/hg19_070510/hg19 ./intermediate/trimmed/Breast/$${base}.trimmed.fastq.gz > intermediate/trimmed/Prostate/$$sample.sam; \
+    rm ./intermediate/trimmed/Prostate/$${base}.trimmed.fastq.gz; \
+	~/Downloads/jre1.7.0/bin/java -Xmx4g -Djava.io.tmpdir=/tmp \
+	-jar ~/Software/SNP_calling/picard-tools-1.128/picard.jar SortSam \
+	SO=coordinate INPUT=intermediate/trimmed/Prostate/$$sample.sam OUTPUT=intermediate/trimmed/Prostate/$$sample.bam \
+	VALIDATION_STRINGENCY=LENIENT CREATE_INDEX=true; rm intermediate/trimmed/Prostate/$$sample.sam; \
+	samtools rmdup -s intermediate/trimmed/Prostate/$$sample.bam intermediate/trimmed/Prostate/$$sample.rmdup.bam;rm intermediate/trimmed/Prostate/$$sample.bam;rm intermediate/trimmed/Prostate/$$sample.bai;samtools index intermediate/trimmed/Prostate/$$sample.rmdup.bam; done
+	samtools merge -f output/trimmed_reads/ProstateCancer_rmdup_trimmed.bam intermediate/trimmed/Prostate/*.rmdup.bam; samtools index output/trimmed_reads/ProstateCancer_rmdup_trimmed.bam
 
 #CNV samples (low-coverage WGS high-molecular-weight DNA)
 output/alignments/CNV_samples_rmdup.bam:
@@ -141,30 +170,17 @@ output/alignments/CNV_samples_rmdup.bam:
 	samtools rmdup -s intermediate/CNV_samples/$$sample.bam intermediate/CNV_samples/$$sample.rmdup.bam;rm intermediate/CNV_samples/$$sample.bam;rm intermediate/CNV_samples/$$sample.bai;samtools index intermediate/CNV_samples/$$sample.rmdup.bam; done
 	samtools merge -f output/alignments/CNV_samples_rmdup.bam intermediate/CNV_samples/*.rmdup.bam; samtools index output/alignments/CNV_samples_rmdup.bam
 
-#HiSeq NA12878 reads (not plasma-associated; consitutional DNA from HiSeq)
-output/alignments/NA12878_HiSeq_rmdup.bam: data/HiSeq_150bp_NA12878/sorted_S1_L001_R1_001.fastq.gz data/HiSeq_150bp_NA12878/sorted_S1_L001_R1_002.fastq.gz 
-	cat data/HiSeq_150bp_NA12878/sorted_S1_L001_R1_001.fastq.gz data/HiSeq_150bp_NA12878/sorted_S1_L001_R1_002.fastq.gz > data/HiSeq_150bp_NA12878/NA12878_HiSeq.fastq.gz
-	bwa mem -t 10 ~/RefSeq/hg19_070510/hg19 data/HiSeq_150bp_NA12878/NA12878_HiSeq.fastq.gz > intermediate/NA12878_HiSeq/NA12878_HiSeq.sam
+output/trimmed_reads/CNV_samples_rmdup_trimmed.bam:
+	for i in ./data/CNV_samples/*.fastq.gz;do base=`basename $$i`;echo "working on $$i" ;sample=`echo $$base | sed s/\.fastq\.gz//`; \
+    zcat $$i | ./scripts/fastx_trimmer -Q33 -f 53 -l 113 -m 113 -z -o ./intermediate/trimmed/CNVsamples/$${base}.trimmed.fastq.gz; \
+    bwa mem -t 10 ~/RefSeq/hg19_070510/hg19 ./intermediate/trimmed/CNVsamples/$${base}.trimmed.fastq.gz > intermediate/trimmed/CNVsamples/$$sample.sam; \
+    rm ./intermediate/trimmed/CNVsamples/$${base}.trimmed.fastq.gz; \
 	~/Downloads/jre1.7.0/bin/java -Xmx4g -Djava.io.tmpdir=/tmp \
 	-jar ~/Software/SNP_calling/picard-tools-1.128/picard.jar SortSam \
-	SO=coordinate INPUT=intermediate/NA12878_HiSeq/NA12878_HiSeq.sam OUTPUT=intermediate/NA12878_HiSeq/NA12878_HiSeq.bam \
-	VALIDATION_STRINGENCY=LENIENT CREATE_INDEX=true
-	rm intermediate/NA12878_HiSeq/NA12878_HiSeq.sam
-	samtools rmdup -s intermediate/NA12878_HiSeq/NA12878_HiSeq.bam output/alignments/NA12878_HiSeq_rmdup.bam
-	rm intermediate/NA12878_HiSeq/$$sample.bam
-	rm intermediate/NA12878_HiSeq/$$sample.bai
-	samtools index output/alignments/NA12878_HiSeq_rmdup.bam
-
-#Monophasic breast cancer samples
-output/alignments/Monophasic_Breast_rmdup.bam: 
-	for i in ./data/Monophasic_Breast/*R1_001.fastq.gz;do base=`basename $$i`;echo "working on $$i" ; \
-	sample=`echo $$base | sed s/R1_001\.fastq\.gz//`;bwa mem -t 4 ~/RefSeq/hg19_070510/hg19 $$i > intermediate/Monophasic_Breast/$$sample.sam; \
-	~/Downloads/jre1.7.0/bin/java -Xmx4g -Djava.io.tmpdir=/tmp \
-	-jar ~/Software/SNP_calling/picard-tools-1.128/picard.jar SortSam \
-	SO=coordinate INPUT=intermediate/Monophasic_Breast/$$sample.sam OUTPUT=intermediate/Monophasic_Breast/$$sample.bam \
-	VALIDATION_STRINGENCY=LENIENT CREATE_INDEX=true; rm intermediate/Monophasic_Breast/$$sample.sam; \
-	samtools rmdup -s intermediate/Monophasic_Breast/$$sample.bam intermediate/Monophasic_Breast/$$sample.rmdup.bam;rm intermediate/Monophasic_Breast/$$sample.bam;rm intermediate/Monophasic_Breast/$$sample.bai;samtools index intermediate/Monophasic_Breast/$$sample.rmdup.bam; done
-	samtools merge -f output/alignments/Monophasic_Breast_rmdup.bam intermediate/Monophasic_Breast/*.rmdup.bam; samtools index output/alignments/Monophasic_Breast_rmdup.bam
+	SO=coordinate INPUT=intermediate/trimmed/CNVsamples/$$sample.sam OUTPUT=intermediate/trimmed/CNVsamples/$$sample.bam \
+	VALIDATION_STRINGENCY=LENIENT CREATE_INDEX=true; rm intermediate/trimmed/CNVsamples/$$sample.sam; \
+	samtools rmdup -s intermediate/trimmed/CNVsamples/$$sample.bam intermediate/trimmed/CNVsamples/$$sample.rmdup.bam;rm intermediate/trimmed/CNVsamples/$$sample.bam;rm intermediate/trimmed/CNVsamples/$$sample.bai;samtools index intermediate/trimmed/CNVsamples/$$sample.rmdup.bam; done
+	samtools merge -f output/trimmed_reads/CNV_samples_rmdup_trimmed.bam intermediate/trimmed/CNVsamples/*.rmdup.bam; samtools index output/trimmed_reads/CNV_samples_rmdup_trimmed.bam
 
 #Biphasic breast cancer samples
 output/alignments/Biphasic_Breast_rmdup.bam: 
@@ -177,6 +193,18 @@ output/alignments/Biphasic_Breast_rmdup.bam:
 	samtools rmdup -s intermediate/Biphasic_Breast/$$sample.bam intermediate/Biphasic_Breast/$$sample.rmdup.bam; \
 	rm intermediate/Biphasic_Breast/$$sample.bam;rm intermediate/Biphasic_Breast/$$sample.bai;samtools index intermediate/Biphasic_Breast/$$sample.rmdup.bam; done
 	samtools merge -f output/alignments/Biphasic_Breast_rmdup.bam intermediate/Biphasic_Breast/*.rmdup.bam; samtools index output/alignments/Biphasic_Breast_rmdup.bam
+
+output/trimmed_reads/Biphasic_Breast_rmdup_trimmed.bam:
+	for i in ./data/Biphasic_Breast/*.fastq.gz;do base=`basename $$i`;echo "working on $$i" ;sample=`echo $$base | sed s/\.fastq\.gz//`; \
+    zcat $$i | ./scripts/fastx_trimmer -Q33 -f 53 -l 113 -m 113 -z -o ./intermediate/trimmed/BiphasicBreast/$${base}.trimmed.fastq.gz; \
+    bwa mem -t 10 ~/RefSeq/hg19_070510/hg19 ./intermediate/trimmed/BiphasicBreast/$${base}.trimmed.fastq.gz > intermediate/trimmed/BiphasicBreast/$$sample.sam; \
+    rm ./intermediate/trimmed/BiphasicBreast/$${base}.trimmed.fastq.gz; \
+	~/Downloads/jre1.7.0/bin/java -Xmx4g -Djava.io.tmpdir=/tmp \
+	-jar ~/Software/SNP_calling/picard-tools-1.128/picard.jar SortSam \
+	SO=coordinate INPUT=intermediate/trimmed/BiphasicBreast/$$sample.sam OUTPUT=intermediate/trimmed/BiphasicBreast/$$sample.bam \
+	VALIDATION_STRINGENCY=LENIENT CREATE_INDEX=true; rm intermediate/trimmed/BiphasicBreast/$$sample.sam; \
+	samtools rmdup -s intermediate/trimmed/BiphasicBreast/$$sample.bam intermediate/trimmed/BiphasicBreast/$$sample.rmdup.bam;rm intermediate/trimmed/BiphasicBreast/$$sample.bam;rm intermediate/trimmed/BiphasicBreast/$$sample.bai;samtools index intermediate/trimmed/BiphasicBreast/$$sample.rmdup.bam; done
+	samtools merge -f output/trimmed_reads/Biphasic_Breast_rmdup_trimmed.bam intermediate/trimmed/BiphasicBreast/*.rmdup.bam; samtools index output/trimmed_reads/Biphasic_Breast_rmdup_trimmed.bam
 
 #8q overrepresented breast cancer samples
 output/alignments/Breast_8q_gain_rmdup.bam: 
@@ -201,6 +229,18 @@ output/FocalAmps/ERBB2_rmdup.bam:
 	samtools rmdup -s intermediate/FocalAmps/ERBB2/$$sample.bam intermediate/FocalAmps/ERBB2/$$sample.rmdup.bam;rm intermediate/FocalAmps/ERBB2/$$sample.bam;rm intermediate/FocalAmps/ERBB2/$$sample.bai;samtools index intermediate/FocalAmps/ERBB2/$$sample.rmdup.bam; done
 	samtools merge -f output/FocalAmps/ERBB2_rmdup.bam intermediate/FocalAmps/ERBB2/*.rmdup.bam; samtools index output/FocalAmps/ERBB2_rmdup.bam
 
+output/trimmed_reads/ERBB2_rmdup_trimmed.bam:
+	for i in ./data/FocalAmps/ERBB2/*.fastq.gz;do base=`basename $$i`;echo "working on $$i" ;sample=`echo $$base | sed s/\.fastq\.gz//`; \
+    zcat $$i | ./scripts/fastx_trimmer -Q33 -f 53 -l 113 -m 113 -z -o ./intermediate/trimmed/ERBB2/$${base}.trimmed.fastq.gz; \
+    bwa mem -t 10 ~/RefSeq/hg19_070510/hg19 ./intermediate/trimmed/ERBB2/$${base}.trimmed.fastq.gz > intermediate/trimmed/ERBB2/$$sample.sam; \
+    rm ./intermediate/trimmed/ERBB2/$${base}.trimmed.fastq.gz; \
+	~/Downloads/jre1.7.0/bin/java -Xmx4g -Djava.io.tmpdir=/tmp \
+	-jar ~/Software/SNP_calling/picard-tools-1.128/picard.jar SortSam \
+	SO=coordinate INPUT=intermediate/trimmed/ERBB2/$$sample.sam OUTPUT=intermediate/trimmed/ERBB2/$$sample.bam \
+	VALIDATION_STRINGENCY=LENIENT CREATE_INDEX=true; rm intermediate/trimmed/ERBB2/$$sample.sam; \
+	samtools rmdup -s intermediate/trimmed/ERBB2/$$sample.bam intermediate/trimmed/ERBB2/$$sample.rmdup.bam;rm intermediate/trimmed/ERBB2/$$sample.bam;rm intermediate/trimmed/ERBB2/$$sample.bai;samtools index intermediate/trimmed/ERBB2/$$sample.rmdup.bam; done
+	samtools merge -f output/trimmed_reads/ERBB2_rmdup_trimmed.bam intermediate/trimmed/ERBB2/*.rmdup.bam; samtools index output/trimmed_reads/ERBB2_rmdup_trimmed.bam
+
 #CCND1 amplified samples
 output/FocalAmps/CCND1_rmdup.bam: 
 	for i in ./data/FocalAmps/CCND1/*R1_001.fastq.gz;do base=`basename $$i`;echo "working on $$i" ; \
@@ -211,6 +251,18 @@ output/FocalAmps/CCND1_rmdup.bam:
 	VALIDATION_STRINGENCY=LENIENT CREATE_INDEX=true; rm intermediate/FocalAmps/CCND1/$$sample.sam; \
 	samtools rmdup -s intermediate/FocalAmps/CCND1/$$sample.bam intermediate/FocalAmps/CCND1/$$sample.rmdup.bam;rm intermediate/FocalAmps/CCND1/$$sample.bam;rm intermediate/FocalAmps/CCND1/$$sample.bai;samtools index intermediate/FocalAmps/CCND1/$$sample.rmdup.bam; done
 	samtools merge -f output/FocalAmps/CCND1_rmdup.bam intermediate/FocalAmps/CCND1/*.rmdup.bam; samtools index output/FocalAmps/CCND1_rmdup.bam
+
+output/trimmed_reads/CCND1_rmdup_trimmed.bam:
+	for i in ./data/FocalAmps/CCND1/*.fastq.gz;do base=`basename $$i`;echo "working on $$i" ;sample=`echo $$base | sed s/\.fastq\.gz//`; \
+    zcat $$i | ./scripts/fastx_trimmer -Q33 -f 53 -l 113 -m 113 -z -o ./intermediate/trimmed/CCND1/$${base}.trimmed.fastq.gz; \
+    bwa mem -t 10 ~/RefSeq/hg19_070510/hg19 ./intermediate/trimmed/CCND1/$${base}.trimmed.fastq.gz > intermediate/trimmed/CCND1/$$sample.sam; \
+    rm ./intermediate/trimmed/CCND1/$${base}.trimmed.fastq.gz; \
+	~/Downloads/jre1.7.0/bin/java -Xmx4g -Djava.io.tmpdir=/tmp \
+	-jar ~/Software/SNP_calling/picard-tools-1.128/picard.jar SortSam \
+	SO=coordinate INPUT=intermediate/trimmed/CCND1/$$sample.sam OUTPUT=intermediate/trimmed/CCND1/$$sample.bam \
+	VALIDATION_STRINGENCY=LENIENT CREATE_INDEX=true; rm intermediate/trimmed/CCND1/$$sample.sam; \
+	samtools rmdup -s intermediate/trimmed/CCND1/$$sample.bam intermediate/trimmed/CCND1/$$sample.rmdup.bam;rm intermediate/trimmed/CCND1/$$sample.bam;rm intermediate/trimmed/CCND1/$$sample.bai;samtools index intermediate/trimmed/CCND1/$$sample.rmdup.bam; done
+	samtools merge -f output/trimmed_reads/CCND1_rmdup_trimmed.bam intermediate/trimmed/CCND1/*.rmdup.bam; samtools index output/trimmed_reads/CCND1_rmdup_trimmed.bam
 
 #MYC amplified samples
 output/FocalAmps/MYC_rmdup.bam: 
@@ -223,577 +275,181 @@ output/FocalAmps/MYC_rmdup.bam:
 	samtools rmdup -s intermediate/FocalAmps/MYC/$$sample.bam intermediate/FocalAmps/MYC/$$sample.rmdup.bam;rm intermediate/FocalAmps/MYC/$$sample.bam;rm intermediate/FocalAmps/MYC/$$sample.bai;samtools index intermediate/FocalAmps/MYC/$$sample.rmdup.bam; done
 	samtools merge -f output/FocalAmps/MYC_rmdup.bam intermediate/FocalAmps/MYC/*.rmdup.bam; samtools index output/FocalAmps/MYC_rmdup.bam
 
+output/trimmed_reads/MYC_rmdup_trimmed.bam:
+	for i in ./data/FocalAmps/MYC/*.fastq.gz;do base=`basename $$i`;echo "working on $$i" ;sample=`echo $$base | sed s/\.fastq\.gz//`; \
+    zcat $$i | ./scripts/fastx_trimmer -Q33 -f 53 -l 113 -m 113 -z -o ./intermediate/trimmed/MYC/$${base}.trimmed.fastq.gz; \
+    bwa mem -t 8 ~/RefSeq/hg19_070510/hg19 ./intermediate/trimmed/MYC/$${base}.trimmed.fastq.gz > intermediate/trimmed/MYC/$$sample.sam; \
+    rm ./intermediate/trimmed/MYC/$${base}.trimmed.fastq.gz; \
+	~/Downloads/jre1.7.0/bin/java -Xmx4g -Djava.io.tmpdir=/tmp \
+	-jar ~/Software/SNP_calling/picard-tools-1.128/picard.jar SortSam \
+	SO=coordinate INPUT=intermediate/trimmed/MYC/$$sample.sam OUTPUT=intermediate/trimmed/MYC/$$sample.bam \
+	VALIDATION_STRINGENCY=LENIENT CREATE_INDEX=true; rm intermediate/trimmed/MYC/$$sample.sam; \
+	samtools rmdup -s intermediate/trimmed/MYC/$$sample.bam intermediate/trimmed/MYC/$$sample.rmdup.bam;rm intermediate/trimmed/MYC/$$sample.bam;rm intermediate/trimmed/MYC/$$sample.bai;samtools index intermediate/trimmed/MYC/$$sample.rmdup.bam; done
+	samtools merge -f output/trimmed_reads/MYC_rmdup_trimmed.bam intermediate/trimmed/MYC/*.rmdup.bam; samtools index output/trimmed_reads/MYC_rmdup_trimmed.bam
 
-####################################################################################################################################
-# 2
-# Trim down primary alignments to 60bp to get cleaner nucleosome signal
-#
-#
-output/trimmed_reads/Merged_Giant_Plasma_trim60bp.sorted.bam:
-	samtools view -h output/alignments/Merged_Giant_Plasma_rmdup.bam | ./scripts/trim_alignments_to_60bp.py | samtools view -S -b -o output/trimmed_reads/Merged_Giant_Plasma_trim60bp.bam -
-	samtools sort output/trimmed_reads/Merged_Giant_Plasma_trim60bp.bam output/trimmed_reads/Merged_Giant_Plasma_trim60bp.sorted
-	samtools index output/trimmed_reads/Merged_Giant_Plasma_trim60bp.sorted.bam
-	rm output/trimmed_reads/Merged_Giant_Plasma_trim60bp.bam
-output/trimmed_reads/Merged_Male_Controls_trim60bp.sorted.bam:
-	samtools view -h output/alignments/Merged_Male_Controls_rmdup.bam | ./scripts/trim_alignments_to_60bp.py | samtools view -S -b -o output/trimmed_reads/Merged_Male_Controls_trim60bp.bam -
-	samtools sort output/trimmed_reads/Merged_Male_Controls_trim60bp.bam output/trimmed_reads/Merged_Male_Controls_trim60bp.sorted
-	samtools index output/trimmed_reads/Merged_Male_Controls_trim60bp.sorted.bam
-	rm output/trimmed_reads/Merged_Male_Controls_trim60bp.bam
-output/trimmed_reads/Merged_Female_Controls_trim60bp.sorted.bam:
-	samtools view -h output/alignments/Merged_Female_Controls_rmdup.bam | ./scripts/trim_alignments_to_60bp.py | samtools view -S -b -o output/trimmed_reads/Merged_Female_Controls_trim60bp.bam -
-	samtools sort output/trimmed_reads/Merged_Female_Controls_trim60bp.bam output/trimmed_reads/Merged_Female_Controls_trim60bp.sorted
-	samtools index output/trimmed_reads/Merged_Female_Controls_trim60bp.sorted.bam
-	rm output/trimmed_reads/Merged_Female_Controls_trim60bp.bam
-output/trimmed_reads/BreastCancer_trim60bp.sorted.bam:
-	samtools view -h output/alignments/BreastCancer_rmdup.bam | ./scripts/trim_alignments_to_60bp.py | samtools view -S -b -o output/trimmed_reads/BreastCancer_trim60bp.bam -
-	samtools sort output/trimmed_reads/BreastCancer_trim60bp.bam output/trimmed_reads/BreastCancer_trim60bp.sorted
-	samtools index output/trimmed_reads/BreastCancer_trim60bp.sorted.bam
-	rm output/trimmed_reads/BreastCancer_trim60bp.bam
-output/trimmed_reads/ProstateCancer_trim60bp.sorted.bam:
-	samtools view -h output/alignments/ProstateCancer_rmdup.bam | ./scripts/trim_alignments_to_60bp.py | samtools view -S -b -o output/trimmed_reads/ProstateCancer_trim60bp.bam -
-	samtools sort output/trimmed_reads/ProstateCancer_trim60bp.bam output/trimmed_reads/ProstateCancer_trim60bp.sorted
-	samtools index output/trimmed_reads/ProstateCancer_trim60bp.sorted.bam
-	rm output/trimmed_reads/ProstateCancer_trim60bp.bam
-output/trimmed_reads/CNV_samples_trim60bp.sorted.bam:
-	samtools view -h output/alignments/CNV_samples_rmdup.bam | ./scripts/trim_alignments_to_60bp.py | samtools view -S -b -o output/trimmed_reads/CNV_samples_trim60bp.bam -
-	samtools sort output/trimmed_reads/CNV_samples_trim60bp.bam output/trimmed_reads/CNV_samples_trim60bp.sorted
-	samtools index output/trimmed_reads/CNV_samples_trim60bp.sorted.bam
-	rm output/trimmed_reads/CNV_samples_trim60bp.bam
-output/trimmed_reads/Monophasic_Breast_trim60bp.sorted.bam:
-	samtools view -h output/alignments/Monophasic_Breast_rmdup.bam | ./scripts/trim_alignments_to_60bp.py | samtools view -S -b -o output/trimmed_reads/Monophasic_Breast_trim60bp.bam -
-	samtools sort output/trimmed_reads/Monophasic_Breast_trim60bp.bam output/trimmed_reads/Monophasic_Breast_trim60bp.sorted
-	samtools index output/trimmed_reads/Monophasic_Breast_trim60bp.sorted.bam
-	rm output/trimmed_reads/Monophasic_Breast_trim60bp.bam
-output/trimmed_reads/Biphasic_Breast_trim60bp.sorted.bam: 
-	samtools view -h output/alignments/Biphasic_Breast_rmdup.bam | ./scripts/trim_alignments_to_60bp.py | samtools view -S -b -o output/trimmed_reads/Biphasic_Breast_trim60bp.bam -
-	samtools sort output/trimmed_reads/Biphasic_Breast_trim60bp.bam output/trimmed_reads/Biphasic_Breast_trim60bp.sorted
-	samtools index output/trimmed_reads/Biphasic_Breast_trim60bp.sorted.bam
-	rm output/trimmed_reads/Biphasic_Breast_trim60bp.bam
-output/trimmed_reads/Breast_8q_gain_trim60bp.sorted.bam: 
-	samtools view -h output/alignments/Breast_8q_gain_rmdup.bam | ./scripts/trim_alignments_to_60bp.py | samtools view -S -b -o output/trimmed_reads/Breast_8q_gain_trim60bp.bam -
-	samtools sort output/trimmed_reads/Breast_8q_gain_trim60bp.bam output/trimmed_reads/Breast_8q_gain_trim60bp.sorted
-	samtools index output/trimmed_reads/Breast_8q_gain_trim60bp.sorted.bam
-	rm output/trimmed_reads/Breast_8q_gain_trim60bp.bam
-output/trimmed_reads/ERBB2_trim60bp.sorted.bam: 
-	samtools view -h output/FocalAmps/ERBB2_rmdup.bam | ./scripts/trim_alignments_to_60bp.py | samtools view -S -b -o output/trimmed_reads/ERBB2_trim60bp.bam -
-	samtools sort output/trimmed_reads/ERBB2_trim60bp.bam output/trimmed_reads/ERBB2_trim60bp.sorted
-	samtools index output/trimmed_reads/ERBB2_trim60bp.sorted.bam
-	rm output/trimmed_reads/ERBB2_trim60bp.bam
-output/trimmed_reads/CCND1_trim60bp.sorted.bam: 
-	samtools view -h output/FocalAmps/CCND1_rmdup.bam | ./scripts/trim_alignments_to_60bp.py | samtools view -S -b -o output/trimmed_reads/CCND1_trim60bp.bam -
-	samtools sort output/trimmed_reads/CCND1_trim60bp.bam output/trimmed_reads/CCND1_trim60bp.sorted
-	samtools index output/trimmed_reads/CCND1_trim60bp.sorted.bam
-	rm output/trimmed_reads/CCND1_trim60bp.bam
-output/trimmed_reads/MYC_trim60bp.sorted.bam:
-	samtools view -h output/FocalAmps/MYC_rmdup.bam | ./scripts/trim_alignments_to_60bp.py | samtools view -S -b -o output/trimmed_reads/MYC_trim60bp.bam -
-	samtools sort output/trimmed_reads/MYC_trim60bp.bam output/trimmed_reads/MYC_trim60bp.sorted
-	samtools index output/trimmed_reads/MYC_trim60bp.sorted.bam
-	rm output/trimmed_reads/MYC_trim60bp.bam
 ####################################################################################################################################
 # 3
 # Analyze mean coverage around Transcription start sites (TSS)
-#   -) for 10000 genes (first one in refseq files)
-#   -) Blood FPKM>5
-#   -) Blood Top20
-#   -) Blood Top100
-#   -) Brain FPKM>5 else FPKM<1
-#   -) Plasma RNASeq Top1000
+#   -) All genes
+#   -) Apoptosis Genes
+#   -) Plasma RNASeq Top1000 (only Genes with NM accession in RefSeq)
+#   -) Plasma RNASeq Bottom1000 (only Genes with NM accession in RefSeq)
+#   -) Plasma RNASeq Top20 (only Genes with NM accession in RefSeq)
+#   -) Plasma RNASeq Top50 (only Genes with NM accession in RefSeq)
+#   -) Plasma RNASeq Top100 (only Genes with NM accession in RefSeq)
+#   -) Plasma RNASeq Top500 (only Genes with NM accession in RefSeq)
 #   
-#3.1 10000 genes
-output/TSS_coverage/10000genes/Merged_Giant_Plasma_10000genes_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -rg ref/refSeq_extended_names_strand.bed -m 10000 -b output/trimmed_reads/Merged_Giant_Plasma_trim60bp.sorted.bam -t 10 > output/TSS_coverage/10000genes/Merged_Giant_Plasma_10000genes_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/10000genes/Merged_Giant_Plasma_10000genes_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/10000genes/Merged_Giant_Plasma_10000genes_tss.txt
-output/TSS_coverage/10000genes/Merged_Male_Controls_10000genes_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -rg ref/refSeq_extended_names_strand.bed -m 10000 -b output/trimmed_reads/Merged_Male_Controls_trim60bp.sorted.bam -t 10 > output/TSS_coverage/10000genes/Merged_Male_Controls_10000genes_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/10000genes/Merged_Male_Controls_10000genes_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/10000genes/Merged_Male_Controls_10000genes_tss.txt
-output/TSS_coverage/10000genes/Merged_Female_Controls_10000genes_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -rg ref/refSeq_extended_names_strand.bed -m 10000 -b output/trimmed_reads/Merged_Female_Controls_trim60bp.sorted.bam -t 10 > output/TSS_coverage/10000genes/Merged_Female_Controls_10000genes_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/10000genes/Merged_Female_Controls_10000genes_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/10000genes/Merged_Female_Controls_10000genes_tss.txt
-output/TSS_coverage/10000genes/BreastCancer_10000genes_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -rg ref/refSeq_extended_names_strand.bed -m 10000 -b output/trimmed_reads/BreastCancer_trim60bp.sorted.bam -t 10 > output/TSS_coverage/10000genes/BreastCancer_10000genes_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/10000genes/BreastCancer_10000genes_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/10000genes/BreastCancer_10000genes_tss.txt
-output/TSS_coverage/10000genes/ProstateCancer_10000genes_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -rg ref/refSeq_extended_names_strand.bed -m 10000 -b output/trimmed_reads/ProstateCancer_trim60bp.sorted.bam -t 10 > output/TSS_coverage/10000genes/ProstateCancer_10000genes_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/10000genes/ProstateCancer_10000genes_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/10000genes/ProstateCancer_10000genes_tss.txt
-output/TSS_coverage/10000genes/CNV_samples_10000genes_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -rg ref/refSeq_extended_names_strand.bed -m 10000 -b output/trimmed_reads/CNV_samples_trim60bp.sorted.bam -t 10 > output/TSS_coverage/10000genes/CNV_samples_10000genes_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/10000genes/CNV_samples_10000genes_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/10000genes/CNV_samples_10000genes_tss.txt
-output/TSS_coverage/10000genes/Monophasic_Breast_10000genes_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -rg ref/refSeq_extended_names_strand.bed -m 10000 -b output/trimmed_reads/Monophasic_Breast_trim60bp.sorted.bam -t 10 > output/TSS_coverage/10000genes/Monophasic_Breast_10000genes_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/10000genes/Monophasic_Breast_10000genes_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/10000genes/Monophasic_Breast_10000genes_tss.txt
-output/TSS_coverage/10000genes/Biphasic_Breast_10000genes_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -rg ref/refSeq_extended_names_strand.bed -m 10000 -b output/trimmed_reads/Biphasic_Breast_trim60bp.sorted.bam -t 10 > output/TSS_coverage/10000genes/Biphasic_Breast_10000genes_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/10000genes/Biphasic_Breast_10000genes_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/10000genes/Biphasic_Breast_10000genes_tss.txt
-output/TSS_coverage/10000genes/Breast_8q_gain_10000genes_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -rg ref/refSeq_extended_names_strand.bed -m 10000 -b output/trimmed_reads/Breast_8q_gain_trim60bp.sorted.bam -t 10 > output/TSS_coverage/10000genes/Breast_8q_gain_10000genes_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/10000genes/Breast_8q_gain_10000genes_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/10000genes/Breast_8q_gain_10000genes_tss.txt
-output/TSS_coverage/10000genes/ERBB2_10000genes_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -rg ref/refSeq_extended_names_strand.bed -m 10000 -b output/trimmed_reads/ERBB2_trim60bp.sorted.bam -t 10 > output/TSS_coverage/10000genes/ERBB2_10000genes_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/10000genes/ERBB2_10000genes_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/10000genes/ERBB2_10000genes_tss.txt
-output/TSS_coverage/10000genes/CCND1_10000genes_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -rg ref/refSeq_extended_names_strand.bed -m 10000 -b output/trimmed_reads/CCND1_trim60bp.sorted.bam -t 10 > output/TSS_coverage/10000genes/CCND1_10000genes_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/10000genes/CCND1_10000genes_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/10000genes/CCND1_10000genes_tss.txt
-output/TSS_coverage/10000genes/MYC_10000genes_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -rg ref/refSeq_extended_names_strand.bed -m 10000 -b output/trimmed_reads/MYC_trim60bp.sorted.bam -t 10 > output/TSS_coverage/10000genes/MYC_10000genes_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/10000genes/MYC_10000genes_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/10000genes/MYC_10000genes_tss.txt
 
-#3.2 Blood_FPKM5
-output/TSS_coverage/Blood_FPKM5/Merged_Giant_Plasma_Blood_FPKM5_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/Expression_atlas_GTEx_whole_blood_FPKM5_names_only.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Giant_Plasma_trim60bp.sorted.bam -t 10 > output/TSS_coverage/Blood_FPKM5/Merged_Giant_Plasma_Blood_FPKM5_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Blood_FPKM5/Merged_Giant_Plasma_Blood_FPKM5_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Blood_FPKM5/Merged_Giant_Plasma_Blood_FPKM5_tss.txt
-output/TSS_coverage/Blood_FPKM5/Merged_Male_Controls_Blood_FPKM5_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/Expression_atlas_GTEx_whole_blood_FPKM5_names_only.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Male_Controls_trim60bp.sorted.bam -t 10 > output/TSS_coverage/Blood_FPKM5/Merged_Male_Controls_Blood_FPKM5_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Blood_FPKM5/Merged_Male_Controls_Blood_FPKM5_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Blood_FPKM5/Merged_Male_Controls_Blood_FPKM5_tss.txt
-output/TSS_coverage/Blood_FPKM5/Merged_Female_Controls_Blood_FPKM5_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/Expression_atlas_GTEx_whole_blood_FPKM5_names_only.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Female_Controls_trim60bp.sorted.bam -t 10 > output/TSS_coverage/Blood_FPKM5/Merged_Female_Controls_Blood_FPKM5_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Blood_FPKM5/Merged_Female_Controls_Blood_FPKM5_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Blood_FPKM5/Merged_Female_Controls_Blood_FPKM5_tss.txt
-output/TSS_coverage/Blood_FPKM5/BreastCancer_Blood_FPKM5_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/Expression_atlas_GTEx_whole_blood_FPKM5_names_only.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/BreastCancer_trim60bp.sorted.bam -t 10 > output/TSS_coverage/Blood_FPKM5/BreastCancer_Blood_FPKM5_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Blood_FPKM5/BreastCancer_Blood_FPKM5_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Blood_FPKM5/BreastCancer_Blood_FPKM5_tss.txt
-output/TSS_coverage/Blood_FPKM5/ProstateCancer_Blood_FPKM5_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/Expression_atlas_GTEx_whole_blood_FPKM5_names_only.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/ProstateCancer_trim60bp.sorted.bam -t 10 > output/TSS_coverage/Blood_FPKM5/ProstateCancer_Blood_FPKM5_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Blood_FPKM5/ProstateCancer_Blood_FPKM5_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Blood_FPKM5/ProstateCancer_Blood_FPKM5_tss.txt
-output/TSS_coverage/Blood_FPKM5/CNV_samples_Blood_FPKM5_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/Expression_atlas_GTEx_whole_blood_FPKM5_names_only.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/CNV_samples_trim60bp.sorted.bam -t 10 > output/TSS_coverage/Blood_FPKM5/CNV_samples_Blood_FPKM5_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Blood_FPKM5/CNV_samples_Blood_FPKM5_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Blood_FPKM5/CNV_samples_Blood_FPKM5_tss.txt
-output/TSS_coverage/Blood_FPKM5/Monophasic_Breast_Blood_FPKM5_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/Expression_atlas_GTEx_whole_blood_FPKM5_names_only.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Monophasic_Breast_trim60bp.sorted.bam -t 10 > output/TSS_coverage/Blood_FPKM5/Monophasic_Breast_Blood_FPKM5_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Blood_FPKM5/Monophasic_Breast_Blood_FPKM5_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Blood_FPKM5/Monophasic_Breast_Blood_FPKM5_tss.txt
-output/TSS_coverage/Blood_FPKM5/Biphasic_Breast_Blood_FPKM5_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/Expression_atlas_GTEx_whole_blood_FPKM5_names_only.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Biphasic_Breast_trim60bp.sorted.bam -t 10 > output/TSS_coverage/Blood_FPKM5/Biphasic_Breast_Blood_FPKM5_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Blood_FPKM5/Biphasic_Breast_Blood_FPKM5_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Blood_FPKM5/Biphasic_Breast_Blood_FPKM5_tss.txt
-output/TSS_coverage/Blood_FPKM5/Breast_8q_gain_Blood_FPKM5_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/Expression_atlas_GTEx_whole_blood_FPKM5_names_only.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Breast_8q_gain_trim60bp.sorted.bam -t 10 > output/TSS_coverage/Blood_FPKM5/Breast_8q_gain_Blood_FPKM5_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Blood_FPKM5/Breast_8q_gain_Blood_FPKM5_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Blood_FPKM5/Breast_8q_gain_Blood_FPKM5_tss.txt
-output/TSS_coverage/Blood_FPKM5/ERBB2_Blood_FPKM5_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/Expression_atlas_GTEx_whole_blood_FPKM5_names_only.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/ERBB2_trim60bp.sorted.bam -t 10 > output/TSS_coverage/Blood_FPKM5/ERBB2_Blood_FPKM5_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Blood_FPKM5/ERBB2_Blood_FPKM5_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Blood_FPKM5/ERBB2_Blood_FPKM5_tss.txt
-output/TSS_coverage/Blood_FPKM5/CCND1_Blood_FPKM5_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/Expression_atlas_GTEx_whole_blood_FPKM5_names_only.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/CCND1_trim60bp.sorted.bam -t 10 > output/TSS_coverage/Blood_FPKM5/CCND1_Blood_FPKM5_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Blood_FPKM5/CCND1_Blood_FPKM5_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Blood_FPKM5/CCND1_Blood_FPKM5_tss.txt
-output/TSS_coverage/Blood_FPKM5/MYC_Blood_FPKM5_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/Expression_atlas_GTEx_whole_blood_FPKM5_names_only.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/MYC_trim60bp.sorted.bam -t 10 > output/TSS_coverage/Blood_FPKM5/MYC_Blood_FPKM5_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Blood_FPKM5/MYC_Blood_FPKM5_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Blood_FPKM5/MYC_Blood_FPKM5_tss.txt
-output/TSS_coverage/Blood_FPKM5/MergedControls_Blood_FPKM5_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/Expression_atlas_GTEx_whole_blood_FPKM5_names_only.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/MergedControls.trimmed.bam -t 10 > output/TSS_coverage/Blood_FPKM5/MergedControls_Blood_FPKM5_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Blood_FPKM5/MergedControls_Blood_FPKM5_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Blood_FPKM5/MergedControls_Blood_FPKM5_tss.txt
+#3.1 All genes
+output/TSS_coverage/All/Merged_Male_Controls_all_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Male_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/All/Merged_Male_Controls_all_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/All/Merged_Male_Controls_all_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/All/Merged_Male_Controls_all_tss.txt
+output/TSS_coverage/All/Merged_Female_Controls_all_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Female_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/All/Merged_Female_Controls_all_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/All/Merged_Female_Controls_all_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/All/Merged_Female_Controls_all_tss.txt
+output/TSS_coverage/All/Merged_Controls_all_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/All/Merged_Controls_all_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/All/Merged_Controls_all_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/All/Merged_Controls_all_tss.txt
 
-
-#3.3 Blood_Top20
-output/TSS_coverage/Blood_Top20/Merged_Giant_Plasma_Blood_Top20_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/GTEx/Top20Blood_noChrM.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Giant_Plasma_trim60bp.sorted.bam -t 10 > output/TSS_coverage/Blood_Top20/Merged_Giant_Plasma_Blood_Top20_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Blood_Top20/Merged_Giant_Plasma_Blood_Top20_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Blood_Top20/Merged_Giant_Plasma_Blood_Top20_tss.txt
-output/TSS_coverage/Blood_Top20/Merged_Male_Controls_Blood_Top20_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/GTEx/Top20Blood_noChrM.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Male_Controls_trim60bp.sorted.bam -t 10 > output/TSS_coverage/Blood_Top20/Merged_Male_Controls_Blood_Top20_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Blood_Top20/Merged_Male_Controls_Blood_Top20_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Blood_Top20/Merged_Male_Controls_Blood_Top20_tss.txt
-output/TSS_coverage/Blood_Top20/Merged_Female_Controls_Blood_Top20_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/GTEx/Top20Blood_noChrM.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Female_Controls_trim60bp.sorted.bam -t 10 > output/TSS_coverage/Blood_Top20/Merged_Female_Controls_Blood_Top20_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Blood_Top20/Merged_Female_Controls_Blood_Top20_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Blood_Top20/Merged_Female_Controls_Blood_Top20_tss.txt
-output/TSS_coverage/Blood_Top20/BreastCancer_Blood_Top20_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/GTEx/Top20Blood_noChrM.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/BreastCancer_trim60bp.sorted.bam -t 10 > output/TSS_coverage/Blood_Top20/BreastCancer_Blood_Top20_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Blood_Top20/BreastCancer_Blood_Top20_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Blood_Top20/BreastCancer_Blood_Top20_tss.txt
-output/TSS_coverage/Blood_Top20/ProstateCancer_Blood_Top20_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/GTEx/Top20Blood_noChrM.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/ProstateCancer_trim60bp.sorted.bam -t 10 > output/TSS_coverage/Blood_Top20/ProstateCancer_Blood_Top20_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Blood_Top20/ProstateCancer_Blood_Top20_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Blood_Top20/ProstateCancer_Blood_Top20_tss.txt
-output/TSS_coverage/Blood_Top20/CNV_samples_Blood_Top20_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/GTEx/Top20Blood_noChrM.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/CNV_samples_trim60bp.sorted.bam -t 10 > output/TSS_coverage/Blood_Top20/CNV_samples_Blood_Top20_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Blood_Top20/CNV_samples_Blood_Top20_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Blood_Top20/CNV_samples_Blood_Top20_tss.txt
-output/TSS_coverage/Blood_Top20/Monophasic_Breast_Blood_Top20_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/GTEx/Top20Blood_noChrM.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Monophasic_Breast_trim60bp.sorted.bam -t 10 > output/TSS_coverage/Blood_Top20/Monophasic_Breast_Blood_Top20_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Blood_Top20/Monophasic_Breast_Blood_Top20_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Blood_Top20/Monophasic_Breast_Blood_Top20_tss.txt
-output/TSS_coverage/Blood_Top20/Biphasic_Breast_Blood_Top20_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/GTEx/Top20Blood_noChrM.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Biphasic_Breast_trim60bp.sorted.bam -t 10 > output/TSS_coverage/Blood_Top20/Biphasic_Breast_Blood_Top20_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Blood_Top20/Biphasic_Breast_Blood_Top20_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Blood_Top20/Biphasic_Breast_Blood_Top20_tss.txt
-output/TSS_coverage/Blood_Top20/Breast_8q_gain_Blood_Top20_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/GTEx/Top20Blood_noChrM.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Breast_8q_gain_trim60bp.sorted.bam -t 10 > output/TSS_coverage/Blood_Top20/Breast_8q_gain_Blood_Top20_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Blood_Top20/Breast_8q_gain_Blood_Top20_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Blood_Top20/Breast_8q_gain_Blood_Top20_tss.txt
-output/TSS_coverage/Blood_Top20/ERBB2_Blood_Top20_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/GTEx/Top20Blood_noChrM.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/ERBB2_trim60bp.sorted.bam -t 10 > output/TSS_coverage/Blood_Top20/ERBB2_Blood_Top20_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Blood_Top20/ERBB2_Blood_Top20_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Blood_Top20/ERBB2_Blood_Top20_tss.txt
-output/TSS_coverage/Blood_Top20/CCND1_Blood_Top20_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/GTEx/Top20Blood_noChrM.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/CCND1_trim60bp.sorted.bam -t 10 > output/TSS_coverage/Blood_Top20/CCND1_Blood_Top20_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Blood_Top20/CCND1_Blood_Top20_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Blood_Top20/CCND1_Blood_Top20_tss.txt
-output/TSS_coverage/Blood_Top20/MYC_Blood_Top20_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/GTEx/Top20Blood_noChrM.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/MYC_trim60bp.sorted.bam -t 10 > output/TSS_coverage/Blood_Top20/MYC_Blood_Top20_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Blood_Top20/MYC_Blood_Top20_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Blood_Top20/MYC_Blood_Top20_tss.txt
-
-#3.4 Blood_Top100
-output/TSS_coverage/Blood_Top100/Merged_Giant_Plasma_Blood_Top100_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/GTEx/Top100Blood_noChrM.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Giant_Plasma_trim60bp.sorted.bam -t 10 > output/TSS_coverage/Blood_Top100/Merged_Giant_Plasma_Blood_Top100_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Blood_Top100/Merged_Giant_Plasma_Blood_Top100_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Blood_Top100/Merged_Giant_Plasma_Blood_Top100_tss.txt
-output/TSS_coverage/Blood_Top100/Merged_Male_Controls_Blood_Top100_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/GTEx/Top100Blood_noChrM.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Male_Controls_trim60bp.sorted.bam -t 10 > output/TSS_coverage/Blood_Top100/Merged_Male_Controls_Blood_Top100_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Blood_Top100/Merged_Male_Controls_Blood_Top100_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Blood_Top100/Merged_Male_Controls_Blood_Top100_tss.txt
-output/TSS_coverage/Blood_Top100/Merged_Female_Controls_Blood_Top100_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/GTEx/Top100Blood_noChrM.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Female_Controls_trim60bp.sorted.bam -t 10 > output/TSS_coverage/Blood_Top100/Merged_Female_Controls_Blood_Top100_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Blood_Top100/Merged_Female_Controls_Blood_Top100_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Blood_Top100/Merged_Female_Controls_Blood_Top100_tss.txt
-output/TSS_coverage/Blood_Top100/BreastCancer_Blood_Top100_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/GTEx/Top100Blood_noChrM.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/BreastCancer_trim60bp.sorted.bam -t 10 > output/TSS_coverage/Blood_Top100/BreastCancer_Blood_Top100_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Blood_Top100/BreastCancer_Blood_Top100_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Blood_Top100/BreastCancer_Blood_Top100_tss.txt
-output/TSS_coverage/Blood_Top100/ProstateCancer_Blood_Top100_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/GTEx/Top100Blood_noChrM.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/ProstateCancer_trim60bp.sorted.bam -t 10 > output/TSS_coverage/Blood_Top100/ProstateCancer_Blood_Top100_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Blood_Top100/ProstateCancer_Blood_Top100_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Blood_Top100/ProstateCancer_Blood_Top100_tss.txt
-output/TSS_coverage/Blood_Top100/CNV_samples_Blood_Top100_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/GTEx/Top100Blood_noChrM.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/CNV_samples_trim60bp.sorted.bam -t 10 > output/TSS_coverage/Blood_Top100/CNV_samples_Blood_Top100_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Blood_Top100/CNV_samples_Blood_Top100_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Blood_Top100/CNV_samples_Blood_Top100_tss.txt
-output/TSS_coverage/Blood_Top100/Monophasic_Breast_Blood_Top100_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/GTEx/Top100Blood_noChrM.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Monophasic_Breast_trim60bp.sorted.bam -t 10 > output/TSS_coverage/Blood_Top100/Monophasic_Breast_Blood_Top100_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Blood_Top100/Monophasic_Breast_Blood_Top100_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Blood_Top100/Monophasic_Breast_Blood_Top100_tss.txt
-output/TSS_coverage/Blood_Top100/Biphasic_Breast_Blood_Top100_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/GTEx/Top100Blood_noChrM.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Biphasic_Breast_trim60bp.sorted.bam -t 10 > output/TSS_coverage/Blood_Top100/Biphasic_Breast_Blood_Top100_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Blood_Top100/Biphasic_Breast_Blood_Top100_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Blood_Top100/Biphasic_Breast_Blood_Top100_tss.txt
-output/TSS_coverage/Blood_Top100/Breast_8q_gain_Blood_Top100_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/GTEx/Top100Blood_noChrM.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Breast_8q_gain_trim60bp.sorted.bam -t 10 > output/TSS_coverage/Blood_Top100/Breast_8q_gain_Blood_Top100_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Blood_Top100/Breast_8q_gain_Blood_Top100_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Blood_Top100/Breast_8q_gain_Blood_Top100_tss.txt
-output/TSS_coverage/Blood_Top100/ERBB2_Blood_Top100_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/GTEx/Top100Blood_noChrM.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/ERBB2_trim60bp.sorted.bam -t 10 > output/TSS_coverage/Blood_Top100/ERBB2_Blood_Top100_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Blood_Top100/ERBB2_Blood_Top100_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Blood_Top100/ERBB2_Blood_Top100_tss.txt
-output/TSS_coverage/Blood_Top100/CCND1_Blood_Top100_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/GTEx/Top100Blood_noChrM.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/CCND1_trim60bp.sorted.bam -t 10 > output/TSS_coverage/Blood_Top100/CCND1_Blood_Top100_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Blood_Top100/CCND1_Blood_Top100_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Blood_Top100/CCND1_Blood_Top100_tss.txt
-output/TSS_coverage/Blood_Top100/MYC_Blood_Top100_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/GTEx/Top100Blood_noChrM.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/MYC_trim60bp.sorted.bam -t 10 > output/TSS_coverage/Blood_Top100/MYC_Blood_Top100_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Blood_Top100/MYC_Blood_Top100_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Blood_Top100/MYC_Blood_Top100_tss.txt
-
-#3.5 Apoptosis genes
+#3.2 Apoptosis genes
 output/TSS_coverage/Apoptosis_genes/Merged_Male_Controls_Apoptosis_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/Apoptosis_genes.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Male_Controls_trim60bp.sorted.bam -t 10 > output/TSS_coverage/Apoptosis_genes/Merged_Male_Controls_Apoptosis_tss.txt
+	./scripts/analyze_TSS_coverage.py -gl ref/Apoptosis_genes.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Male_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/Apoptosis_genes/Merged_Male_Controls_Apoptosis_tss.txt
 	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Apoptosis_genes/Merged_Male_Controls_Apoptosis_tss.txt
 	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Apoptosis_genes/Merged_Male_Controls_Apoptosis_tss.txt
+output/TSS_coverage/Apoptosis_genes/Merged_Female_Controls_Apoptosis_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -gl ref/Apoptosis_genes.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Female_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/Apoptosis_genes/Merged_Female_Controls_Apoptosis_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Apoptosis_genes/Merged_Female_Controls_Apoptosis_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Apoptosis_genes/Merged_Female_Controls_Apoptosis_tss.txt
+output/TSS_coverage/Apoptosis_genes/Merged_Controls_Apoptosis_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -gl ref/Apoptosis_genes.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/Apoptosis_genes/Merged_Controls_Apoptosis_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Apoptosis_genes/Merged_Controls_Apoptosis_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Apoptosis_genes/Merged_Controls_Apoptosis_tss.txt
 
-#3.6 Plasma RNASeq Top1000
-output/TSS_coverage/PlasmaRNASeq/Merged_Giant_Plasma_Top1000_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/Plasma-RNASeq/Top1000.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Giant_Plasma_trim60bp.sorted.bam -t 10 > output/TSS_coverage/PlasmaRNASeq/Merged_Giant_Plasma_Top1000_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/Merged_Giant_Plasma_Top1000_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/Merged_Giant_Plasma_Top1000_tss.txt
+#3.3 Plasma RNASeq Top1000
 output/TSS_coverage/PlasmaRNASeq/Merged_Male_Controls_Top1000_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/Plasma-RNASeq/Top1000.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Male_Controls_trim60bp.sorted.bam -t 10 > output/TSS_coverage/PlasmaRNASeq/Merged_Male_Controls_Top1000_tss.txt
+	./scripts/analyze_TSS_coverage.py -gl ref/Plasma-RNASeq/Top1000_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Male_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/PlasmaRNASeq/Merged_Male_Controls_Top1000_tss.txt
 	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/Merged_Male_Controls_Top1000_tss.txt
 	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/Merged_Male_Controls_Top1000_tss.txt
 output/TSS_coverage/PlasmaRNASeq/Merged_Female_Controls_Top1000_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/Plasma-RNASeq/Top1000.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Female_Controls_trim60bp.sorted.bam -t 10 > output/TSS_coverage/PlasmaRNASeq/Merged_Female_Controls_Top1000_tss.txt
+	./scripts/analyze_TSS_coverage.py -gl ref/Plasma-RNASeq/Top1000_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Female_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/PlasmaRNASeq/Merged_Female_Controls_Top1000_tss.txt
 	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/Merged_Female_Controls_Top1000_tss.txt
 	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/Merged_Female_Controls_Top1000_tss.txt
 output/TSS_coverage/PlasmaRNASeq/BreastCancer_Top1000_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/Plasma-RNASeq/Top1000.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/BreastCancer_trim60bp.sorted.bam -t 10 > output/TSS_coverage/PlasmaRNASeq/BreastCancer_Top1000_tss.txt
+	./scripts/analyze_TSS_coverage.py -gl ref/Plasma-RNASeq/Top1000_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/BreastCancer_rmdup_trimmed.bam -t 10 > output/TSS_coverage/PlasmaRNASeq/BreastCancer_Top1000_tss.txt
 	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/BreastCancer_Top1000_tss.txt
 	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/BreastCancer_Top1000_tss.txt
 output/TSS_coverage/PlasmaRNASeq/ProstateCancer_Top1000_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/Plasma-RNASeq/Top1000.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/ProstateCancer_trim60bp.sorted.bam -t 10 > output/TSS_coverage/PlasmaRNASeq/ProstateCancer_Top1000_tss.txt
+	./scripts/analyze_TSS_coverage.py -gl ref/Plasma-RNASeq/Top1000_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/ProstateCancer_rmdup_trimmed.bam -t 10 > output/TSS_coverage/PlasmaRNASeq/ProstateCancer_Top1000_tss.txt
 	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/ProstateCancer_Top1000_tss.txt
 	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/ProstateCancer_Top1000_tss.txt
 output/TSS_coverage/PlasmaRNASeq/CNV_samples_Top1000_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/Plasma-RNASeq/Top1000.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/CNV_samples_trim60bp.sorted.bam -t 10 > output/TSS_coverage/PlasmaRNASeq/CNV_samples_Top1000_tss.txt
+	./scripts/analyze_TSS_coverage.py -gl ref/Plasma-RNASeq/Top1000_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/CNV_samples_rmdup_trimmed.bam -t 10 > output/TSS_coverage/PlasmaRNASeq/CNV_samples_Top1000_tss.txt
 	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/CNV_samples_Top1000_tss.txt
 	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/CNV_samples_Top1000_tss.txt
-output/TSS_coverage/PlasmaRNASeq/Monophasic_Breast_Top1000_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/Plasma-RNASeq/Top1000.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Monophasic_Breast_trim60bp.sorted.bam -t 10 > output/TSS_coverage/PlasmaRNASeq/Monophasic_Breast_Top1000_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/Monophasic_Breast_Top1000_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/Monophasic_Breast_Top1000_tss.txt
 output/TSS_coverage/PlasmaRNASeq/Biphasic_Breast_Top1000_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/Plasma-RNASeq/Top1000.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Biphasic_Breast_trim60bp.sorted.bam -t 10 > output/TSS_coverage/PlasmaRNASeq/Biphasic_Breast_Top1000_tss.txt
+	./scripts/analyze_TSS_coverage.py -gl ref/Plasma-RNASeq/Top1000_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/BreastCancer_rmdup_trimmed.bam -t 10 > output/TSS_coverage/PlasmaRNASeq/Biphasic_Breast_Top1000_tss.txt
 	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/Biphasic_Breast_Top1000_tss.txt
 	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/Biphasic_Breast_Top1000_tss.txt
-output/TSS_coverage/PlasmaRNASeq/Breast_8q_gain_Top1000_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/Plasma-RNASeq/Top1000.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Breast_8q_gain_trim60bp.sorted.bam -t 10 > output/TSS_coverage/PlasmaRNASeq/Breast_8q_gain_Top1000_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/Breast_8q_gain_PlasmaRNASeq_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/Breast_8q_gain_PlasmaRNASeq_tss.txt
 output/TSS_coverage/PlasmaRNASeq/ERBB2_Top1000_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/Plasma-RNASeq/Top1000.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/ERBB2_trim60bp.sorted.bam -t 10 > output/TSS_coverage/PlasmaRNASeq/ERBB2_Top1000_tss.txt
+	./scripts/analyze_TSS_coverage.py -gl ref/Plasma-RNASeq/Top1000.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/ERBB2_rmdup_trimmed.bam -t 10 > output/TSS_coverage/PlasmaRNASeq/ERBB2_Top1000_tss.txt
 	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/ERBB2_Top1000_tss.txt
 	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/ERBB2_Top1000_tss.txt
 output/TSS_coverage/PlasmaRNASeq/CCND1_Top1000_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/Plasma-RNASeq/Top1000.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/CCND1_trim60bp.sorted.bam -t 10 > output/TSS_coverage/PlasmaRNASeq/CCND1_Top1000_tss.txt
+	./scripts/analyze_TSS_coverage.py -gl ref/Plasma-RNASeq/Top1000_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/CCND1_rmdup_trimmed.bam -t 10 > output/TSS_coverage/PlasmaRNASeq/CCND1_Top1000_tss.txt
 	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/CCND1_Top1000_tss.txt
 	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/CCND1_Top1000_tss.txt
 output/TSS_coverage/PlasmaRNASeq/MYC_Top1000_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/Plasma-RNASeq/Top1000.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/MYC_trim60bp.sorted.bam -t 10 > output/TSS_coverage/PlasmaRNASeq/MYC_Top1000_tss.txt
+	./scripts/analyze_TSS_coverage.py -gl ref/Plasma-RNASeq/Top1000_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/MYC_rmdup_trimmed.bam -t 10 > output/TSS_coverage/PlasmaRNASeq/MYC_Top1000_tss.txt
 	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/MYC_Top1000_tss.txt
 	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/MYC_Top1000_tss.txt
 output/TSS_coverage/PlasmaRNASeq/MergedControls_Plasma_Top1000_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/Plasma-RNASeq/Top1000.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/MergedControls.trimmed.bam -t 10 > output/TSS_coverage/PlasmaRNASeq/MergedControls_Plasma_Top1000_tss.txt
+	./scripts/analyze_TSS_coverage.py -gl ref/Plasma-RNASeq/Top1000_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/PlasmaRNASeq/MergedControls_Plasma_Top1000_tss.txt
 	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/MergedControls_Plasma_Top1000_tss.txt
 	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/MergedControls_Plasma_Top1000_tss.txt
 
+#3.4 Bottom1000
 output/TSS_coverage/PlasmaRNASeq/MergedControls_Plasma_Bottom1000_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/Plasma-RNASeq/Bottom1000.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/MergedControls.trimmed.bam -t 10 > output/TSS_coverage/PlasmaRNASeq/MergedControls_Plasma_Bottom1000_tss.txt
+	./scripts/analyze_TSS_coverage.py -gl ref/Plasma-RNASeq/Bottom1000_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/PlasmaRNASeq/MergedControls_Plasma_Bottom1000_tss.txt
 	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/MergedControls_Plasma_Bottom1000_tss.txt
 	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/MergedControls_Plasma_Bottom1000_tss.txt
+output/TSS_coverage/PlasmaRNASeq/Merged_Male_Controls_Plasma_Bottom1000_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -gl ref/Plasma-RNASeq/Bottom1000_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Male_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/PlasmaRNASeq/Merged_Male_Controls_Plasma_Bottom1000_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/Merged_Male_Controls_Plasma_Bottom1000_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/Merged_Male_Controls_Plasma_Bottom1000_tss.txt
+output/TSS_coverage/PlasmaRNASeq/Merged_Female_Controls_Plasma_Bottom1000_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -gl ref/Plasma-RNASeq/Bottom1000_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Female_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/PlasmaRNASeq/Merged_Female_Controls_Plasma_Bottom1000_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/Merged_Female_Controls_Plasma_Bottom1000_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/Merged_Female_Controls_Plasma_Bottom1000_tss.txt
 
-#3.6 Plasma RNASeq Top1000 only entries with NM number
-output/TSS_coverage/PlasmaRNASeq/MergedControls_Plasma_Bottom1000_NMonly_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/Plasma-RNASeq/Bottom1000_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/MergedControls.trimmed.bam -t 10 > output/TSS_coverage/PlasmaRNASeq/MergedControls_Plasma_Bottom1000_NMonly_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/MergedControls_Plasma_Bottom1000_NMonly_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/MergedControls_Plasma_Bottom1000_NMonly_tss.txt
-output/TSS_coverage/PlasmaRNASeq/MergedControls_Plasma_Top1000_NMonly_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -gl ref/Plasma-RNASeq/Top1000_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/MergedControls.trimmed.bam -t 10 > output/TSS_coverage/PlasmaRNASeq/MergedControls_Plasma_Top1000_NMonly_tss.txt
-	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/MergedControls_Plasma_Top1000_NMonly_tss.txt
-	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/MergedControls_Plasma_Top1000_NMonly_tss.txt
+#Top20
+output/TSS_coverage/PlasmaRNASeq/MergedControls_Plasma_Top20_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -gl ref/Plasma-RNASeq/Top20_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/PlasmaRNASeq/MergedControls_Plasma_Top20_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/MergedControls_Plasma_Top20_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/MergedControls_Plasma_Top20_tss.txt
+output/TSS_coverage/PlasmaRNASeq/Merged_Male_Controls_Plasma_Top20_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -gl ref/Plasma-RNASeq/Top20_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Male_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/PlasmaRNASeq/Merged_Male_Controls_Plasma_Top20_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/Merged_Male_Controls_Plasma_Top20_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/Merged_Male_Controls_Plasma_Top20_tss.txt
+output/TSS_coverage/PlasmaRNASeq/Merged_Female_Controls_Plasma_Top20_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -gl ref/Plasma-RNASeq/Top20_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Female_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/PlasmaRNASeq/Merged_Female_Controls_Plasma_Top20_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/Merged_Female_Controls_Plasma_Top20_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/Merged_Female_Controls_Plasma_Top20_tss.txt
+#Top50
+output/TSS_coverage/PlasmaRNASeq/MergedControls_Plasma_Top50_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -gl ref/Plasma-RNASeq/Top50_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/PlasmaRNASeq/MergedControls_Plasma_Top50_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/MergedControls_Plasma_Top50_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/MergedControls_Plasma_Top50_tss.txt
+output/TSS_coverage/PlasmaRNASeq/Merged_Male_Controls_Plasma_Top50_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -gl ref/Plasma-RNASeq/Top50_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Male_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/PlasmaRNASeq/Merged_Male_Controls_Plasma_Top50_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/Merged_Male_Controls_Plasma_Top50_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/Merged_Male_Controls_Plasma_Top50_tss.txt
+output/TSS_coverage/PlasmaRNASeq/Merged_Female_Controls_Plasma_Top50_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -gl ref/Plasma-RNASeq/Top50_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Female_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/PlasmaRNASeq/Merged_Female_Controls_Plasma_Top50_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/Merged_Female_Controls_Plasma_Top50_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/Merged_Female_Controls_Plasma_Top50_tss.txt
+#Top100
+output/TSS_coverage/PlasmaRNASeq/MergedControls_Plasma_Top100_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -gl ref/Plasma-RNASeq/Top100_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/PlasmaRNASeq/MergedControls_Plasma_Top100_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/MergedControls_Plasma_Top100_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/MergedControls_Plasma_Top100_tss.txt
+output/TSS_coverage/PlasmaRNASeq/Merged_Male_Controls_Plasma_Top100_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -gl ref/Plasma-RNASeq/Top100_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Male_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/PlasmaRNASeq/Merged_Male_Controls_Plasma_Top100_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/Merged_Male_Controls_Plasma_Top100_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/Merged_Male_Controls_Plasma_Top100_tss.txt
+output/TSS_coverage/PlasmaRNASeq/Merged_Female_Controls_Plasma_Top100_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -gl ref/Plasma-RNASeq/Top100_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Female_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/PlasmaRNASeq/Merged_Female_Controls_Plasma_Top100_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/Merged_Female_Controls_Plasma_Top100_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/Merged_Female_Controls_Plasma_Top100_tss.txt
+#Top500
+output/TSS_coverage/PlasmaRNASeq/MergedControls_Plasma_Top500_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -gl ref/Plasma-RNASeq/Top500_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/PlasmaRNASeq/MergedControls_Plasma_Top500_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/MergedControls_Plasma_Top500_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/MergedControls_Plasma_Top500_tss.txt
+output/TSS_coverage/PlasmaRNASeq/Merged_Male_Controls_Plasma_Top500_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -gl ref/Plasma-RNASeq/Top500_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Male_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/PlasmaRNASeq/Merged_Male_Controls_Plasma_Top500_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/Merged_Male_Controls_Plasma_Top500_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/Merged_Male_Controls_Plasma_Top500_tss.txt
+output/TSS_coverage/PlasmaRNASeq/Merged_Female_Controls_Plasma_Top500_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -gl ref/Plasma-RNASeq/Top500_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Female_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/PlasmaRNASeq/Merged_Female_Controls_Plasma_Top500_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/Merged_Female_Controls_Plasma_Top500_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/Merged_Female_Controls_Plasma_Top500_tss.txt
 
 ####################################################################################################################################
 # 4
 # Analyze mean coverage around Transcription end sites (TES)
-#   -) for 10000 genes (first one in refseq files)
-#   -) Blood 
-#   -) Blood Top20
-#   -) Blood Top100
-#   -) Brain FPKM>5 else FPKM<1
-#3.1 10000 genes
-output/TES_coverage/10000genes/Merged_Giant_Plasma_10000genes_TES.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -rg ref/refSeq_extended_names_strand.bed -m 10000 -b output/trimmed_reads/Merged_Giant_Plasma_trim60bp.sorted.bam -t 10 > output/TES_coverage/10000genes/Merged_Giant_Plasma_10000genes_TES.txt
-	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/10000genes/Merged_Giant_Plasma_10000genes_TES.txt
-	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/10000genes/Merged_Giant_Plasma_10000genes_TES.txt
-output/TES_coverage/10000genes/Merged_Male_Controls_10000genes_TES.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -rg ref/refSeq_extended_names_strand.bed -m 10000 -b output/trimmed_reads/Merged_Male_Controls_trim60bp.sorted.bam -t 10 > output/TES_coverage/10000genes/Merged_Male_Controls_10000genes_TES.txt
-	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/10000genes/Merged_Male_Controls_10000genes_TES.txt
-	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/10000genes/Merged_Male_Controls_10000genes_TES.txt
-output/TES_coverage/10000genes/Merged_Female_Controls_10000genes_TES.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -rg ref/refSeq_extended_names_strand.bed -m 10000 -b output/trimmed_reads/Merged_Female_Controls_trim60bp.sorted.bam -t 10 > output/TES_coverage/10000genes/Merged_Female_Controls_10000genes_TES.txt
-	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/10000genes/Merged_Female_Controls_10000genes_TES.txt
-	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/10000genes/Merged_Female_Controls_10000genes_TES.txt
-output/TES_coverage/10000genes/BreastCancer_10000genes_TES.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -rg ref/refSeq_extended_names_strand.bed -m 10000 -b output/trimmed_reads/BreastCancer_trim60bp.sorted.bam -t 10 > output/TES_coverage/10000genes/BreastCancer_10000genes_TES.txt
-	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/10000genes/BreastCancer_10000genes_TES.txt
-	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/10000genes/BreastCancer_10000genes_TES.txt
-output/TES_coverage/10000genes/CNV_samples_10000genes_TES.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -rg ref/refSeq_extended_names_strand.bed -m 10000 -b output/trimmed_reads/CNV_samples_trim60bp.sorted.bam -t 10 > output/TES_coverage/10000genes/CNV_samples_10000genes_TES.txt
-	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/10000genes/CNV_samples_10000genes_TES.txt
-	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/10000genes/CNV_samples_10000genes_TES.txt
-output/TES_coverage/10000genes/ProstateCancer_10000genes_TES.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -rg ref/refSeq_extended_names_strand.bed -m 10000 -b output/trimmed_reads/ProstateCancer_trim60bp.sorted.bam -t 10 > output/TES_coverage/10000genes/ProstateCancer_10000genes_TES.txt
-	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/10000genes/ProstateCancer_10000genes_TES.txt
-	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/10000genes/ProstateCancer_10000genes_TES.txt
-output/TES_coverage/10000genes/Monophasic_Breast_10000genes_TES.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -rg ref/refSeq_extended_names_strand.bed -m 10000 -b output/trimmed_reads/Monophasic_Breast_trim60bp.sorted.bam -t 10 > output/TES_coverage/10000genes/Monophasic_Breast_10000genes_TES.txt
-	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/10000genes/Monophasic_Breast_10000genes_TES.txt
-	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/10000genes/Monophasic_Breast_10000genes_TES.txt
-output/TES_coverage/10000genes/Biphasic_Breast_10000genes_TES.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -rg ref/refSeq_extended_names_strand.bed -m 10000 -b output/trimmed_reads/Biphasic_Breast_trim60bp.sorted.bam -t 10 > output/TES_coverage/10000genes/Biphasic_Breast_10000genes_TES.txt
-	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/10000genes/Biphasic_Breast_10000genes_TES.txt
-	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/10000genes/Biphasic_Breast_10000genes_TES.txt
-output/TES_coverage/10000genes/Breast_8q_gain_10000genes_TES.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -rg ref/refSeq_extended_names_strand.bed -m 10000 -b output/trimmed_reads/Breast_8q_gain_trim60bp.sorted.bam -t 10 > output/TES_coverage/10000genes/Breast_8q_gain_10000genes_TES.txt
-	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/10000genes/Breast_8q_gain_10000genes_TES.txt
-	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/10000genes/Breast_8q_gain_10000genes_TES.txt
-output/TES_coverage/10000genes/ERBB2_10000genes_TES.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -rg ref/refSeq_extended_names_strand.bed -m 10000 -b output/trimmed_reads/ERBB2_trim60bp.sorted.bam -t 10 > output/TES_coverage/10000genes/ERBB2_10000genes_TES.txt
-	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/10000genes/ERBB2_10000genes_TES.txt
-	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/10000genes/ERBB2_10000genes_TES.txt
-output/TES_coverage/10000genes/CCND1_10000genes_TES.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -rg ref/refSeq_extended_names_strand.bed -m 10000 -b output/trimmed_reads/CCND1_trim60bp.sorted.bam -t 10 > output/TES_coverage/10000genes/CCND1_10000genes_TES.txt
-	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/10000genes/CCND1_10000genes_TES.txt
-	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/10000genes/CCND1_10000genes_TES.txt
-output/TES_coverage/10000genes/MYC_10000genes_TES.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -rg ref/refSeq_extended_names_strand.bed -m 10000 -b output/trimmed_reads/MYC_trim60bp.sorted.bam -t 10 > output/TES_coverage/10000genes/MYC_10000genes_TES.txt
-	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/10000genes/MYC_10000genes_TES.txt
-	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/10000genes/MYC_10000genes_TES.txt
+#   -) Plasma RNASeq Top1000
+#
 
-#3.2 Blood_FPKM5
-output/TES_coverage/Blood_FPKM5/Merged_Giant_Plasma_Blood_FPKM5_TES.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -gl ref/Expression_atlas_GTEx_whole_blood_FPKM5_names_only.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Giant_Plasma_trim60bp.sorted.bam -t 10 > output/TES_coverage/Blood_FPKM5/Merged_Giant_Plasma_Blood_FPKM5_TES.txt
-	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/Blood_FPKM5/Merged_Giant_Plasma_Blood_FPKM5_TES.txt
-	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/Blood_FPKM5/Merged_Giant_Plasma_Blood_FPKM5_TES.txt
-output/TES_coverage/Blood_FPKM5/Merged_Male_Controls_Blood_FPKM5_TES.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -gl ref/Expression_atlas_GTEx_whole_blood_FPKM5_names_only.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Male_Controls_trim60bp.sorted.bam -t 10 > output/TES_coverage/Blood_FPKM5/Merged_Male_Controls_Blood_FPKM5_TES.txt
-	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/Blood_FPKM5/Merged_Male_Controls_Blood_FPKM5_TES.txt
-	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/Blood_FPKM5/Merged_Male_Controls_Blood_FPKM5_TES.txt
-output/TES_coverage/Blood_FPKM5/Merged_Female_Controls_Blood_FPKM5_TES.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -gl ref/Expression_atlas_GTEx_whole_blood_FPKM5_names_only.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Female_Controls_trim60bp.sorted.bam -t 10 > output/TES_coverage/Blood_FPKM5/Merged_Female_Controls_Blood_FPKM5_TES.txt
-	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/Blood_FPKM5/Merged_Female_Controls_Blood_FPKM5_TES.txt
-	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/Blood_FPKM5/Merged_Female_Controls_Blood_FPKM5_TES.txt
-output/TES_coverage/Blood_FPKM5/BreastCancer_Blood_FPKM5_TES.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -gl ref/Expression_atlas_GTEx_whole_blood_FPKM5_names_only.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/BreastCancer_trim60bp.sorted.bam -t 10 > output/TES_coverage/Blood_FPKM5/BreastCancer_Blood_FPKM5_TES.txt
-	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/Blood_FPKM5/BreastCancer_Blood_FPKM5_TES.txt
-	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/Blood_FPKM5/BreastCancer_Blood_FPKM5_TES.txt
-output/TES_coverage/Blood_FPKM5/ProstateCancer_Blood_FPKM5_TES.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -gl ref/Expression_atlas_GTEx_whole_blood_FPKM5_names_only.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/ProstateCancer_trim60bp.sorted.bam -t 10 > output/TES_coverage/Blood_FPKM5/ProstateCancer_Blood_FPKM5_TES.txt
-	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/Blood_FPKM5/ProstateCancer_Blood_FPKM5_TES.txt
-	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/Blood_FPKM5/ProstateCancer_Blood_FPKM5_TES.txt
-output/TES_coverage/Blood_FPKM5/CNV_samples_Blood_FPKM5_TES.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -gl ref/Expression_atlas_GTEx_whole_blood_FPKM5_names_only.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/CNV_samples_trim60bp.sorted.bam -t 10 > output/TES_coverage/Blood_FPKM5/CNV_samples_Blood_FPKM5_TES.txt
-	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/Blood_FPKM5/CNV_samples_Blood_FPKM5_TES.txt
-	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/Blood_FPKM5/CNV_samples_Blood_FPKM5_TES.txt
-output/TES_coverage/Blood_FPKM5/Monophasic_Breast_Blood_FPKM5_TES.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -gl ref/Expression_atlas_GTEx_whole_blood_FPKM5_names_only.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Monophasic_Breast_trim60bp.sorted.bam -t 10 > output/TES_coverage/Blood_FPKM5/Monophasic_Breast_Blood_FPKM5_TES.txt
-	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/Blood_FPKM5/Monophasic_Breast_Blood_FPKM5_TES.txt
-	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/Blood_FPKM5/Monophasic_Breast_Blood_FPKM5_TES.txt
-output/TES_coverage/Blood_FPKM5/Biphasic_Breast_Blood_FPKM5_TES.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -gl ref/Expression_atlas_GTEx_whole_blood_FPKM5_names_only.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Biphasic_Breast_trim60bp.sorted.bam -t 10 > output/TES_coverage/Blood_FPKM5/Biphasic_Breast_Blood_FPKM5_TES.txt
-	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/Blood_FPKM5/Biphasic_Breast_Blood_FPKM5_TES.txt
-	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/Blood_FPKM5/Biphasic_Breast_Blood_FPKM5_TES.txt
-output/TES_coverage/Blood_FPKM5/Breast_8q_gain_Blood_FPKM5_TES.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -gl ref/Expression_atlas_GTEx_whole_blood_FPKM5_names_only.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Breast_8q_gain_trim60bp.sorted.bam -t 10 > output/TES_coverage/Blood_FPKM5/Breast_8q_gain_Blood_FPKM5_TES.txt
-	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/Blood_FPKM5/Breast_8q_gain_Blood_FPKM5_TES.txt
-	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/Blood_FPKM5/Breast_8q_gain_Blood_FPKM5_TES.txt
-output/TES_coverage/Blood_FPKM5/ERBB2_Blood_FPKM5_TES.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -gl ref/Expression_atlas_GTEx_whole_blood_FPKM5_names_only.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/ERBB2_trim60bp.sorted.bam -t 10 > output/TES_coverage/Blood_FPKM5/ERBB2_Blood_FPKM5_TES.txt
-	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/Blood_FPKM5/ERBB2_Blood_FPKM5_TES.txt
-	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/Blood_FPKM5/ERBB2_Blood_FPKM5_TES.txt
-output/TES_coverage/Blood_FPKM5/CCND1_Blood_FPKM5_TES.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -gl ref/Expression_atlas_GTEx_whole_blood_FPKM5_names_only.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/CCND1_trim60bp.sorted.bam -t 10 > output/TES_coverage/Blood_FPKM5/CCND1_Blood_FPKM5_TES.txt
-	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/Blood_FPKM5/CCND1_Blood_FPKM5_TES.txt
-	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/Blood_FPKM5/CCND1_Blood_FPKM5_TES.txt
-output/TES_coverage/Blood_FPKM5/MYC_Blood_FPKM5_TES.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -gl ref/Expression_atlas_GTEx_whole_blood_FPKM5_names_only.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/MYC_trim60bp.sorted.bam -t 10 > output/TES_coverage/Blood_FPKM5/MYC_Blood_FPKM5_TES.txt
-	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/Blood_FPKM5/MYC_Blood_FPKM5_TES.txt
-	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/Blood_FPKM5/MYC_Blood_FPKM5_TES.txt
-
-#3.3 Blood_Top20
-output/TES_coverage/Blood_Top20/Merged_Giant_Plasma_Blood_Top20_TES.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -gl ref/GTEx/Top20Blood_noChrM.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Giant_Plasma_trim60bp.sorted.bam -t 10 > output/TES_coverage/Blood_Top20/Merged_Giant_Plasma_Blood_Top20_TES.txt
-	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/Blood_Top20/Merged_Giant_Plasma_Blood_Top20_TES.txt
-	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/Blood_Top20/Merged_Giant_Plasma_Blood_Top20_TES.txt
-output/TES_coverage/Blood_Top20/Merged_Male_Controls_Blood_Top20_TES.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -gl ref/GTEx/Top20Blood_noChrM.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Male_Controls_trim60bp.sorted.bam -t 10 > output/TES_coverage/Blood_Top20/Merged_Male_Controls_Blood_Top20_TES.txt
-	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/Blood_Top20/Merged_Male_Controls_Blood_Top20_TES.txt
-	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/Blood_Top20/Merged_Male_Controls_Blood_Top20_TES.txt
-output/TES_coverage/Blood_Top20/Merged_Female_Controls_Blood_Top20_TES.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -gl ref/GTEx/Top20Blood_noChrM.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Female_Controls_trim60bp.sorted.bam -t 10 > output/TES_coverage/Blood_Top20/Merged_Female_Controls_Blood_Top20_TES.txt
-	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/Blood_Top20/Merged_Female_Controls_Blood_Top20_TES.txt
-	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/Blood_Top20/Merged_Female_Controls_Blood_Top20_TES.txt
-output/TES_coverage/Blood_Top20/BreastCancer_Blood_Top20_TES.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -gl ref/GTEx/Top20Blood_noChrM.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/BreastCancer_trim60bp.sorted.bam -t 10 > output/TES_coverage/Blood_Top20/BreastCancer_Blood_Top20_TES.txt
-	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/Blood_Top20/BreastCancer_Blood_Top20_TES.txt
-	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/Blood_Top20/BreastCancer_Blood_Top20_TES.txt
-output/TES_coverage/Blood_Top20/ProstateCancer_Blood_Top20_TES.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -gl ref/GTEx/Top20Blood_noChrM.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/ProstateCancer_trim60bp.sorted.bam -t 10 > output/TES_coverage/Blood_Top20/ProstateCancer_Blood_Top20_TES.txt
-	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/Blood_Top20/ProstateCancer_Blood_Top20_TES.txt
-	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/Blood_Top20/ProstateCancer_Blood_Top20_TES.txt
-output/TES_coverage/Blood_Top20/CNV_samples_Blood_Top20_TES.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -gl ref/GTEx/Top20Blood_noChrM.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/CNV_samples_trim60bp.sorted.bam -t 10 > output/TES_coverage/Blood_Top20/CNV_samples_Blood_Top20_TES.txt
-	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/Blood_Top20/CNV_samples_Blood_Top20_TES.txt
-	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/Blood_Top20/CNV_samples_Blood_Top20_TES.txt
-output/TES_coverage/Blood_Top20/Monophasic_Breast_Blood_Top20_TES.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -gl ref/GTEx/Top20Blood_noChrM.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Monophasic_Breast_trim60bp.sorted.bam -t 10 > output/TES_coverage/Blood_Top20/Monophasic_Breast_Blood_Top20_TES.txt
-	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/Blood_Top20/Monophasic_Breast_Blood_Top20_TES.txt
-	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/Blood_Top20/Monophasic_Breast_Blood_Top20_TES.txt
-output/TES_coverage/Blood_Top20/Biphasic_Breast_Blood_Top20_TES.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -gl ref/GTEx/Top20Blood_noChrM.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Biphasic_Breast_trim60bp.sorted.bam -t 10 > output/TES_coverage/Blood_Top20/Biphasic_Breast_Blood_Top20_TES.txt
-	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/Blood_Top20/Biphasic_Breast_Blood_Top20_TES.txt
-	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/Blood_Top20/Biphasic_Breast_Blood_Top20_TES.txt
-output/TES_coverage/Blood_Top20/Breast_8q_gain_Blood_Top20_TES.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -gl ref/GTEx/Top20Blood_noChrM.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Breast_8q_gain_trim60bp.sorted.bam -t 10 > output/TES_coverage/Blood_Top20/Breast_8q_gain_Blood_Top20_TES.txt
-	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/Blood_Top20/Breast_8q_gain_Blood_Top20_TES.txt
-	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/Blood_Top20/Breast_8q_gain_Blood_Top20_TES.txt
-output/TES_coverage/Blood_Top20/ERBB2_Blood_Top20_TES.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -gl ref/GTEx/Top20Blood_noChrM.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/ERBB2_trim60bp.sorted.bam -t 10 > output/TES_coverage/Blood_Top20/ERBB2_Blood_Top20_TES.txt
-	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/Blood_Top20/ERBB2_Blood_Top20_TES.txt
-	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/Blood_Top20/ERBB2_Blood_Top20_TES.txt
-output/TES_coverage/Blood_Top20/CCND1_Blood_Top20_TES.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -gl ref/GTEx/Top20Blood_noChrM.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/CCND1_trim60bp.sorted.bam -t 10 > output/TES_coverage/Blood_Top20/CCND1_Blood_Top20_TES.txt
-	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/Blood_Top20/CCND1_Blood_Top20_TES.txt
-	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/Blood_Top20/CCND1_Blood_Top20_TES.txt
-output/TES_coverage/Blood_Top20/MYC_Blood_Top20_TES.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -gl ref/GTEx/Top20Blood_noChrM.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/MYC_trim60bp.sorted.bam -t 10 > output/TES_coverage/Blood_Top20/MYC_Blood_Top20_TES.txt
-	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/Blood_Top20/MYC_Blood_Top20_TES.txt
-	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/Blood_Top20/MYC_Blood_Top20_TES.txt
-
-#3.4 Blood_Top100
-output/TES_coverage/Blood_Top100/Merged_Giant_Plasma_Blood_Top100_TES.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -gl ref/GTEx/Top100Blood_noChrM.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Giant_Plasma_trim60bp.sorted.bam -t 10 > output/TES_coverage/Blood_Top100/Merged_Giant_Plasma_Blood_Top100_TES.txt
-	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/Blood_Top100/Merged_Giant_Plasma_Blood_Top100_TES.txt
-	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/Blood_Top100/Merged_Giant_Plasma_Blood_Top100_TES.txt
-output/TES_coverage/Blood_Top100/Merged_Male_Controls_Blood_Top100_TES.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -gl ref/GTEx/Top100Blood_noChrM.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Male_Controls_trim60bp.sorted.bam -t 10 > output/TES_coverage/Blood_Top100/Merged_Male_Controls_Blood_Top100_TES.txt
-	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/Blood_Top100/Merged_Male_Controls_Blood_Top100_TES.txt
-	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/Blood_Top100/Merged_Male_Controls_Blood_Top100_TES.txt
-output/TES_coverage/Blood_Top100/Merged_Female_Controls_Blood_Top100_TES.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -gl ref/GTEx/Top100Blood_noChrM.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Female_Controls_trim60bp.sorted.bam -t 10 > output/TES_coverage/Blood_Top100/Merged_Female_Controls_Blood_Top100_TES.txt
-	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/Blood_Top100/Merged_Female_Controls_Blood_Top100_TES.txt
-	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/Blood_Top100/Merged_Female_Controls_Blood_Top100_TES.txt
-output/TES_coverage/Blood_Top100/BreastCancer_Blood_Top100_TES.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -gl ref/GTEx/Top100Blood_noChrM.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/BreastCancer_trim60bp.sorted.bam -t 10 > output/TES_coverage/Blood_Top100/BreastCancer_Blood_Top100_TES.txt
-	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/Blood_Top100/BreastCancer_Blood_Top100_TES.txt
-	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/Blood_Top100/BreastCancer_Blood_Top100_TES.txt
-output/TES_coverage/Blood_Top100/ProstateCancer_Blood_Top100_TES.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -gl ref/GTEx/Top100Blood_noChrM.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/ProstateCancer_trim60bp.sorted.bam -t 10 > output/TES_coverage/Blood_Top100/ProstateCancer_Blood_Top100_TES.txt
-	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/Blood_Top100/ProstateCancer_Blood_Top100_TES.txt
-	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/Blood_Top100/ProstateCancer_Blood_Top100_TES.txt
-output/TES_coverage/Blood_Top100/CNV_samples_Blood_Top100_TES.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -gl ref/GTEx/Top100Blood_noChrM.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/CNV_samples_trim60bp.sorted.bam -t 10 > output/TES_coverage/Blood_Top100/CNV_samples_Blood_Top100_TES.txt
-	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/Blood_Top100/CNV_samples_Blood_Top100_TES.txt
-	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/Blood_Top100/CNV_samples_Blood_Top100_TES.txt
-output/TES_coverage/Blood_Top100/Monophasic_Breast_Blood_Top100_TES.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -gl ref/GTEx/Top100Blood_noChrM.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Monophasic_Breast_trim60bp.sorted.bam -t 10 > output/TES_coverage/Blood_Top100/Monophasic_Breast_Blood_Top100_TES.txt
-	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/Blood_Top100/Monophasic_Breast_Blood_Top100_TES.txt
-	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/Blood_Top100/Monophasic_Breast_Blood_Top100_TES.txt
-output/TES_coverage/Blood_Top100/Biphasic_Breast_Blood_Top100_TES.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -gl ref/GTEx/Top100Blood_noChrM.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Biphasic_Breast_trim60bp.sorted.bam -t 10 > output/TES_coverage/Blood_Top100/Biphasic_Breast_Blood_Top100_TES.txt
-	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/Blood_Top100/Biphasic_Breast_Blood_Top100_TES.txt
-	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/Blood_Top100/Biphasic_Breast_Blood_Top100_TES.txt
-output/TES_coverage/Blood_Top100/Breast_8q_gain_Blood_Top100_TES.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -gl ref/GTEx/Top100Blood_noChrM.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Breast_8q_gain_trim60bp.sorted.bam -t 10 > output/TES_coverage/Blood_Top100/Breast_8q_gain_Blood_Top100_TES.txt
-	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/Blood_Top100/Breast_8q_gain_Blood_Top100_TES.txt
-	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/Blood_Top100/Breast_8q_gain_Blood_Top100_TES.txt
-output/TES_coverage/Blood_Top100/ERBB2_Blood_Top100_TES.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -gl ref/GTEx/Top100Blood_noChrM.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/ERBB2_trim60bp.sorted.bam -t 10 > output/TES_coverage/Blood_Top100/ERBB2_Blood_Top100_TES.txt
-	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/Blood_Top100/ERBB2_Blood_Top100_TES.txt
-	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/Blood_Top100/ERBB2_Blood_Top100_TES.txt
-output/TES_coverage/Blood_Top100/CCND1_Blood_Top100_TES.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -gl ref/GTEx/Top100Blood_noChrM.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/CCND1_trim60bp.sorted.bam -t 10 > output/TES_coverage/Blood_Top100/CCND1_Blood_Top100_TES.txt
-	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/Blood_Top100/CCND1_Blood_Top100_TES.txt
-	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/Blood_Top100/CCND1_Blood_Top100_TES.txt
-output/TES_coverage/Blood_Top100/MYC_Blood_Top100_TES.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -gl ref/GTEx/Top100Blood_noChrM.csv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/MYC_trim60bp.sorted.bam -t 10 > output/TES_coverage/Blood_Top100/MYC_Blood_Top100_TES.txt
-	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/Blood_Top100/MYC_Blood_Top100_TES.txt
-	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/Blood_Top100/MYC_Blood_Top100_TES.txt
-
-#3.6 Plasma RNASeq Top1000 only entries with NM number
+#4.1 Plasma RNASeq Top1000 and Bottom1000 only entries with NM number
 output/TES_coverage/PlasmaRNASeq/MergedControls_Plasma_Bottom1000_NMonly_tes.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -gl ref/Plasma-RNASeq/Bottom1000_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/MergedControls.trimmed.bam -t 10 > output/TES_coverage/PlasmaRNASeq/MergedControls_Plasma_Bottom1000_NMonly_tes.txt
+	./scripts/analyze_TES_coverage.py -gl ref/Plasma-RNASeq/Bottom1000_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam -t 10 > output/TES_coverage/PlasmaRNASeq/MergedControls_Plasma_Bottom1000_NMonly_tes.txt
 	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/PlasmaRNASeq/MergedControls_Plasma_Bottom1000_NMonly_tes.txt
 	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/PlasmaRNASeq/MergedControls_Plasma_Bottom1000_NMonly_tes.txt
 output/TES_coverage/PlasmaRNASeq/MergedControls_Plasma_Top1000_NMonly_tes.txt: ./scripts/analyze_TES_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TES_coverage.py -gl ref/Plasma-RNASeq/Top1000_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/MergedControls.trimmed.bam -t 10 > output/TES_coverage/PlasmaRNASeq/MergedControls_Plasma_Top1000_NMonly_tes.txt
+	./scripts/analyze_TES_coverage.py -gl ref/Plasma-RNASeq/Top1000_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam -t 10 > output/TES_coverage/PlasmaRNASeq/MergedControls_Plasma_Top1000_NMonly_tes.txt
 	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/PlasmaRNASeq/MergedControls_Plasma_Top1000_NMonly_tes.txt
 	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/PlasmaRNASeq/MergedControls_Plasma_Top1000_NMonly_tes.txt
 
@@ -803,266 +459,130 @@ output/TES_coverage/PlasmaRNASeq/MergedControls_Plasma_Top1000_NMonly_tes.txt: .
 #   
 
 #ERBB2
-output/Single_Genes_Wig/Giant_Plasma_Merge_ERBB2.wig:
-	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/Giant_Plasma_Merge_ERBB2.wig \
-    -s 10000 -e 10000 -b output/trimmed_reads/Merged_Giant_Plasma_trim60bp.sorted.bam -g ERBB2
 output/Single_Genes_Wig/Merged_Female_Controls_ERBB2.wig:
 	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/Merged_Female_Controls_ERBB2.wig \
-    -s 10000 -e 10000 -b output/trimmed_reads/Merged_Female_Controls_trim60bp.sorted.bam -g ERBB2
+    -s 10000 -e 10000 -b output/trimmed_reads/Merged_Female_Controls_rmdup_trimmed.bam -g ERBB2
 output/Single_Genes_Wig/Merged_Male_Controls_ERBB2.wig:
 	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/Merged_Male_Controls_ERBB2.wig \
-    -s 10000 -e 10000 -b output/trimmed_reads/Merged_Male_Controls_trim60bp.sorted.bam -g ERBB2
+    -s 10000 -e 10000 -b output/trimmed_reads/Merged_Male_Controls_rmdup_trimmed.bam -g ERBB2
 output/Single_Genes_Wig/Merged_Male_Controls_ERBB2_large.wig:
 	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/Merged_Male_Controls_ERBB2_large.wig \
-    -s 100000 -e 100000 -b output/trimmed_reads/Merged_Male_Controls_trim60bp.sorted.bam -g ERBB2
-output/Single_Genes_Wig/Merged_Male_Controls_ERBB2_large_smoothed_400bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Merged_Male_Controls_ERBB2_large.wig -o output/Single_Genes_Wig/Merged_Male_Controls_ERBB2_large_smoothed_400bp.wig -w 400
-output/Single_Genes_Wig/Merged_Male_Controls_ERBB2_large_smoothed_1000bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Merged_Male_Controls_ERBB2_large.wig -o output/Single_Genes_Wig/Merged_Male_Controls_ERBB2_large_smoothed_1000bp.wig -w 1000
+    -s 100000 -e 100000 -b output/trimmed_reads/Merged_Male_Controls_rmdup_trimmed.bam -g ERBB2
+output/Single_Genes_Wig/Merged_Male_Controls_ERBB2_large_smoothed_100bp.wig:
+	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Merged_Male_Controls_ERBB2_large.wig -o output/Single_Genes_Wig/Merged_Male_Controls_ERBB2_large_smoothed_100bp.wig -w 100
+output/Single_Genes_Wig/Merged_Controls_ERBB2_large.wig:
+	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/Merged_Controls_ERBB2_large.wig \
+    -s 100000 -e 100000 -b output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam -g ERBB2
+output/Single_Genes_Wig/Merged_Controls_ERBB2_large_smoothed_100bp.wig:
+	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Merged_Controls_ERBB2_large.wig -o output/Single_Genes_Wig/Merged_Controls_ERBB2_large_smoothed_100bp.wig -w 100
 
 output/Single_Genes_Wig/ERBB2_positive_ERBB2.wig:
 	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/ERBB2_positive_ERBB2.wig \
-    -s 10000 -e 10000 -b output/trimmed_reads/ERBB2_trim60bp.sorted.bam -g ERBB2
+    -s 10000 -e 10000 -b output/trimmed_reads/ERBB2_rmdup_trimmed.bam -g ERBB2
 output/Single_Genes_Wig/ERBB2_positive_ERBB2_smoothed_10window.wig:
 	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/ERBB2_positive_ERBB2.wig -o output/Single_Genes_Wig/ERBB2_positive_ERBB2_smoothed_10window.wig
 output/Single_Genes_Wig/ERBB2_positive_ERBB2_large.wig:
 	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/ERBB2_positive_ERBB2_large.wig \
-    -s 100000 -e 100000 -b output/trimmed_reads/ERBB2_trim60bp.sorted.bam -g ERBB2
-output/Single_Genes_Wig/ERBB2_positive_ERBB2_large_smoothed_400bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/ERBB2_positive_ERBB2_large.wig -o output/Single_Genes_Wig/ERBB2_positive_ERBB2_large_smoothed_400bp.wig -w 400
-output/Single_Genes_Wig/ERBB2_positive_ERBB2_large_smoothed_1000bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/ERBB2_positive_ERBB2_large.wig -o output/Single_Genes_Wig/ERBB2_positive_ERBB2_large_smoothed_1000bp.wig -w 1000
+    -s 100000 -e 100000 -b output/trimmed_reads/ERBB2_rmdup_trimmed.bam -g ERBB2
+output/Single_Genes_Wig/ERBB2_positive_ERBB2_large_smoothed_100bp.wig:
+	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/ERBB2_positive_ERBB2_large.wig -o output/Single_Genes_Wig/ERBB2_positive_ERBB2_large_smoothed_100bp.wig -w 100
 
 output/Single_Genes_Wig/Breast_Cancer_ERBB2.wig:
 	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/Breast_Cancer_ERBB2.wig \
-    -s 10000 -e 10000 -b output/trimmed_reads/BreastCancer_trim60bp.sorted.bam -g ERBB2
+    -s 10000 -e 10000 -b output/trimmed_reads/BreastCancer_rmdup_trimmed.bam -g ERBB2
 
 #MYC
-output/Single_Genes_Wig/Giant_Plasma_Merge_MYC.wig:
-	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/Giant_Plasma_Merge_MYC.wig \
-    -s 10000 -e 10000 -b output/trimmed_reads/Merged_Giant_Plasma_trim60bp.sorted.bam -g MYC
 output/Single_Genes_Wig/Merged_Female_Controls_MYC.wig:
 	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/Merged_Female_Controls_MYC.wig \
-    -s 10000 -e 10000 -b output/trimmed_reads/Merged_Female_Controls_trim60bp.sorted.bam -g MYC
+    -s 10000 -e 10000 -b output/trimmed_reads/Merged_Female_Controls_rmdup_trimmed.bam -g MYC
 output/Single_Genes_Wig/Merged_Male_Controls_MYC.wig:
 	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/Merged_Male_Controls_MYC.wig \
-    -s 10000 -e 10000 -b output/trimmed_reads/Merged_Male_Controls_trim60bp.sorted.bam -g MYC
+    -s 10000 -e 10000 -b output/trimmed_reads/Merged_Male_Controls_rmdup_trimmed.bam -g MYC
 output/Single_Genes_Wig/MYC_positive_MYC.wig:
 	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/MYC_positive_MYC.wig \
     -s 10000 -e 10000 -b output/trimmed_reads/MYC_trim60bp.sorted.bam -g MYC
+output/Single_Genes_Wig/MYC_positive_MYC_large.wig:
+	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/MYC_positive_MYC.wig \
+    -s 100000 -e 100000 -b output/trimmed_reads/MYC_trim60bp.sorted.bam -g MYC
+output/Single_Genes_Wig/MYC_positive_MYC_large_smoothed_100bp.wig:
+	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/MYC_positive_MYC_large.wig -o output/Single_Genes_Wig/MYC_positive_MYC_large_smoothed_100bp.wig -w 100
+output/Single_Genes_Wig/Merged_Controls_MYC_large.wig:
+	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/Merged_Controls_MYC_large.wig \
+    -s 100000 -e 100000 -b output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam -g MYC
+output/Single_Genes_Wig/Merged_Controls_MYC_large_smoothed_100bp.wig:
+	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Merged_Controls_MYC_large.wig -o output/Single_Genes_Wig/Merged_Controls_MYC_large_smoothed_100bp.wig -w 100
+
 output/Single_Genes_Wig/Breast_Cancer_MYC.wig:
 	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/Breast_Cancer_MYC.wig \
-    -s 10000 -e 10000 -b output/trimmed_reads/BreastCancer_trim60bp.sorted.bam -g MYC
+    -s 10000 -e 10000 -b output/trimmed_reads/BreastCancer_rmdup_trimmed.bam -g MYC
 output/Single_Genes_Wig/Prostate_Cancer_MYC.wig:
 	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/Prostate_Cancer_MYC.wig \
     -s 10000 -e 10000 -b output/trimmed_reads/ProstateCancer_trim60bp.sorted.bam -g MYC
 
 #CCND1
-output/Single_Genes_Wig/Giant_Plasma_Merge_CCND1.wig:
-	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/Giant_Plasma_Merge_CCND1.wig \
-    -s 10000 -e 10000 -b output/trimmed_reads/Merged_Giant_Plasma_trim60bp.sorted.bam -g CCND1
 output/Single_Genes_Wig/Merged_Female_Controls_CCND1.wig:
 	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/Merged_Female_Controls_CCND1.wig \
-    -s 10000 -e 10000 -b output/trimmed_reads/Merged_Female_Controls_trim60bp.sorted.bam -g CCND1
+    -s 10000 -e 10000 -b output/trimmed_reads/Merged_Female_Controls_rmdup_trimmed.bam -g CCND1
 output/Single_Genes_Wig/Merged_Male_Controls_CCND1.wig:
 	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/Merged_Male_Controls_CCND1.wig \
-    -s 10000 -e 10000 -b output/trimmed_reads/Merged_Male_Controls_trim60bp.sorted.bam -g CCND1
+    -s 10000 -e 10000 -b output/trimmed_reads/Merged_Male_Controls_rmdup_trimmed.bam -g CCND1
 output/Single_Genes_Wig/Merged_Male_Controls_CCND1_large.wig:
 	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/Merged_Male_Controls_CCND1_large.wig \
     -s 100000 -e 100000 -b output/trimmed_reads/Merged_Male_Controls_trim60bp.sorted.bam -g CCND1
-output/Single_Genes_Wig/Merged_Male_Controls_CCND1_large_smoothed_400bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Merged_Male_Controls_CCND1_large.wig -o output/Single_Genes_Wig/Merged_Male_Controls_CCND1_large_smoothed_400bp.wig -w 400
-output/Single_Genes_Wig/Merged_Male_Controls_CCND1_large_smoothed_1000bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Merged_Male_Controls_CCND1_large.wig -o output/Single_Genes_Wig/Merged_Male_Controls_CCND1_large_smoothed_1000bp.wig -w 1000
+output/Single_Genes_Wig/Merged_Male_Controls_CCND1_large_smoothed_100bp.wig:
+	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Merged_Male_Controls_CCND1_large.wig -o output/Single_Genes_Wig/Merged_Male_Controls_CCND1_large_smoothed_100bp.wig -w 100
+output/Single_Genes_Wig/Merged_Controls_CCND1_large.wig:
+	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/Merged_Controls_CCND1_large.wig \
+    -s 100000 -e 100000 -b output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam -g CCND1
+output/Single_Genes_Wig/Merged_Controls_CCND1_large_smoothed_100bp.wig:
+	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Merged_Controls_CCND1_large.wig -o output/Single_Genes_Wig/Merged_Controls_CCND1_large_smoothed_100bp.wig -w 100
 
 output/Single_Genes_Wig/CCND1_positive_CCND1.wig:
 	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/CCND1_positive_CCND1.wig \
-    -s 10000 -e 10000 -b output/trimmed_reads/CCND1_trim60bp.sorted.bam -g CCND1
+    -s 10000 -e 10000 -b output/trimmed_reads/CCND1_rmdup_trimmed.bam -g CCND1
 output/Single_Genes_Wig/CCND1_positive_CCND1_smoothed_10window.wig:
 	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/CCND1_positive_CCND1.wig -o output/Single_Genes_Wig/CCND1_positive_CCND1_smoothed_10window.wig  
 output/Single_Genes_Wig/CCND1_positive_CCND1_large.wig:
 	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/CCND1_positive_CCND1_large.wig \
-    -s 100000 -e 100000 -b output/trimmed_reads/CCND1_trim60bp.sorted.bam -g CCND1
-output/Single_Genes_Wig/CCND1_positive_CCND1_large_smoothed_400bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/CCND1_positive_CCND1_large.wig -o output/Single_Genes_Wig/CCND1_positive_CCND1_large_smoothed_400bp.wig -w 400
-output/Single_Genes_Wig/CCND1_positive_CCND1_large_smoothed_1000bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/CCND1_positive_CCND1_large.wig -o output/Single_Genes_Wig/CCND1_positive_CCND1_large_smoothed_1000bp.wig -w 1000
+    -s 100000 -e 100000 -b output/trimmed_reads/CCND1_rmdup_trimmed.bam -g CCND1
+output/Single_Genes_Wig/CCND1_positive_CCND1_large_smoothed_100bp.wig:
+	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/CCND1_positive_CCND1_large.wig -o output/Single_Genes_Wig/CCND1_positive_CCND1_large_smoothed_100bp.wig -w 100
 
 output/Single_Genes_Wig/Breast_Cancer_CCND1.wig:
 	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/Breast_Cancer_CCND1.wig \
-    -s 10000 -e 10000 -b output/trimmed_reads/BreastCancer_trim60bp.sorted.bam -g CCND1
+    -s 10000 -e 10000 -b output/trimmed_reads/BreastCancer_rmdup_trimmed.bam -g CCND1
 
 #AR
-output/Single_Genes_Wig/Giant_Plasma_Merge_AR.wig:
-	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/Giant_Plasma_Merge_AR.wig \
-    -s 10000 -e 10000 -b output/trimmed_reads/Merged_Giant_Plasma_trim60bp.sorted.bam -g AR
 output/Single_Genes_Wig/Merged_Female_Controls_AR.wig:
 	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/Merged_Female_Controls_AR.wig \
-    -s 10000 -e 10000 -b output/trimmed_reads/Merged_Female_Controls_trim60bp.sorted.bam -g AR
+    -s 10000 -e 10000 -b output/trimmed_reads/Merged_Female_Controls_rmdup_trimmed.bam -g AR
 output/Single_Genes_Wig/Merged_Female_Controls_AR_large.wig:
 	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/Merged_Female_Controls_AR_large.wig \
-    -s 100000 -e 100000 -b output/trimmed_reads/Merged_Female_Controls_trim60bp.sorted.bam -g AR
-output/Single_Genes_Wig/Merged_Female_Controls_AR_large_smoothed_400bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Merged_Female_Controls_AR_large.wig -o output/Single_Genes_Wig/Merged_Female_Controls_AR_large_smoothed_400bp.wig -w 400
-output/Single_Genes_Wig/Merged_Female_Controls_AR_large_smoothed_1000bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Merged_Female_Controls_AR_large.wig -o output/Single_Genes_Wig/Merged_Female_Controls_AR_large_smoothed_1000bp.wig -w 1000
+    -s 100000 -e 100000 -b output/trimmed_reads/Merged_Female_Controls_rmdup_trimmed.bam -g AR
+output/Single_Genes_Wig/Merged_Female_Controls_AR_large_smoothed_100bp.wig:
+	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Merged_Female_Controls_AR_large.wig -o output/Single_Genes_Wig/Merged_Female_Controls_AR_large_smoothed_100bp.wig -w 100
 output/Single_Genes_Wig/Merged_Male_Controls_AR.wig:
 	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/Merged_Male_Controls_AR.wig \
-    -s 10000 -e 10000 -b output/trimmed_reads/Merged_Male_Controls_trim60bp.sorted.bam -g AR
+    -s 10000 -e 10000 -b output/trimmed_reads/Merged_Male_Controls_rmdup_trimmed.bam -g AR
+output/Single_Genes_Wig/Merged_Controls_AR_large.wig:
+	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/Merged_Controls_AR_large.wig \
+    -s 100000 -e 100000 -b output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam -g AR
+output/Single_Genes_Wig/Merged_Controls_AR_large_smoothed_100bp.wig:
+	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Merged_Controls_AR_large.wig -o output/Single_Genes_Wig/Merged_Controls_AR_large_smoothed_100bp.wig -w 100
+
 output/Single_Genes_Wig/Breast_Cancer_AR.wig:
 	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/Breast_Cancer_AR.wig \
-    -s 10000 -e 10000 -b output/trimmed_reads/BreastCancer_trim60bp.sorted.bam -g AR
+    -s 10000 -e 10000 -b output/trimmed_reads/BreastCancer_rmdup_trimmed.bam -g AR
 output/Single_Genes_Wig/Prostate_Cancer_AR.wig:
 	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/Prostate_Cancer_AR.wig \
-    -s 10000 -e 10000 -b output/trimmed_reads/ProstateCancer_trim60bp.sorted.bam -g AR
+    -s 10000 -e 10000 -b output/trimmed_reads/ProstateCancer_rmdup_trimmed.bam -g AR
 output/Single_Genes_Wig/Prostate_Cancer_AR_smoothed_10window.wig:
 	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Prostate_Cancer_AR.wig -o output/Single_Genes_Wig/Prostate_Cancer_AR_smoothed_10window.wig
 output/Single_Genes_Wig/Prostate_Cancer_AR_large.wig:
 	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/Prostate_Cancer_AR_large.wig \
-    -s 100000 -e 100000 -b output/trimmed_reads/ProstateCancer_trim60bp.sorted.bam -g AR
-output/Single_Genes_Wig/Prostate_Cancer_AR_large_smoothed_400bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Prostate_Cancer_AR_large.wig -o output/Single_Genes_Wig/Prostate_Cancer_AR_large_smoothed_400bp.wig -w 400
-output/Single_Genes_Wig/Prostate_Cancer_AR_large_smoothed_1000bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Prostate_Cancer_AR_large.wig -o output/Single_Genes_Wig/Prostate_Cancer_AR_large_smoothed_1000bp.wig -w 1000
-
-
-#HBB
-output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBB_large.wig:
-	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBB_large.wig \
-    -s 100000 -e 100000 -b output/trimmed_reads/MergedControls.trimmed.bam -g HBB
-output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBB_large_gc_corr.wig:
-	./scripts/GC_correct_wig_file.py -w output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBB_large.wig -o output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBB_large_gc_corr.wig \
-     -fa ~/RefSeq/hg19_070510/hg19.fa -ws 300 -gcf output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBB_gc_control.txt
-output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBB_large_smoothed_100bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBB_large.wig -o output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBB_large_smoothed_100bp.wig -w 100
-output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBB_large_smoothed_400bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBB_large.wig -o output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBB_large_smoothed_400bp.wig -w 400
-output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBB_large_smoothed_1000bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBB_large.wig -o output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBB_large_smoothed_1000bp.wig -w 1000
-
-#HBA2
-output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA2_large.wig:
-	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA2_large.wig \
-    -s 100000 -e 100000 -b output/trimmed_reads/MergedControls.trimmed.bam -g HBA2
-output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA2_large_gc_corr.wig:
-	./scripts/GC_correct_wig_file.py -w output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA2_large.wig -o output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA2_large_gc_corr.wig -fa ~/RefSeq/hg19_070510/hg19.fa -ws 300
-output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA2_large_smoothed_100bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA2_large.wig -o output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA2_large_smoothed_100bp.wig -w 100
-output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA2_large_smoothed_400bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA2_large.wig -o output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA2_large_smoothed_400bp.wig -w 400
-output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA2_large_smoothed_1000bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA2_large.wig -o output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA2_large_smoothed_1000bp.wig -w 1000
-
-#HBA1
-output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA1_large.wig:
-	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA1_large.wig \
-    -s 100000 -e 100000 -b output/trimmed_reads/MergedControls.trimmed.bam -g HBA1
-output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA1_large_gc_corr.wig:
-	./scripts/GC_correct_wig_file.py -w output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA1_large.wig -o output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA1_large_gc_corr.wig -fa ~/RefSeq/hg19_070510/hg19.fa -ws 300
-output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA1_large_smoothed_100bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA1_large.wig -o output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA1_large_smoothed_100bp.wig -w 100
-output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA1_large_smoothed_400bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA1_large.wig -o output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA1_large_smoothed_400bp.wig -w 400
-output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA1_large_smoothed_1000bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA1_large.wig -o output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_HBA1_large_smoothed_1000bp.wig -w 1000
-
-#S100A9
-output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_S100A9_large.wig:
-	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_S100A9_large.wig \
-    -s 100000 -e 100000 -b output/trimmed_reads/MergedControls.trimmed.bam -g S100A9
-output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_S100A9_large_gc_corr.wig:
-	./scripts/GC_correct_wig_file.py -w output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_S100A9_large.wig -o output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_S100A9_large_gc_corr.wig -fa ~/RefSeq/hg19_070510/hg19.fa -ws 300
-output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_S100A9_large_smoothed_100bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_S100A9_large.wig -o output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_S100A9_large_smoothed_100bp.wig -w 100
-output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_S100A9_large_smoothed_400bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_S100A9_large.wig -o output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_S100A9_large_smoothed_400bp.wig -w 400
-output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_S100A9_large_smoothed_1000bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_S100A9_large.wig -o output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_S100A9_large_smoothed_1000bp.wig -w 1000
-
-#FTL
-output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_FTL_large.wig:
-	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_FTL_large.wig \
-    -s 100000 -e 100000 -b output/trimmed_reads/MergedControls.trimmed.bam -g FTL
-output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_FTL_large_gc_corr.wig:
-	./scripts/GC_correct_wig_file.py -w output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_FTL_large.wig -o output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_FTL_large_gc_corr.wig -fa ~/RefSeq/hg19_070510/hg19.fa -ws 300
-output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_FTL_large_smoothed_100bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_FTL_large.wig -o output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_FTL_large_smoothed_100bp.wig -w 100
-output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_FTL_large_smoothed_400bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_FTL_large.wig -o output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_FTL_large_smoothed_400bp.wig -w 400
-output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_FTL_large_smoothed_1000bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_FTL_large.wig -o output/Single_Genes_Wig/Whole-blood_Expressed/Merged_Controls_FTL_large_smoothed_1000bp.wig -w 1000
-
-#Genes unexpressed in Blood but Brain
-#PAX6
-output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_PAX6_large.wig:
-	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_PAX6_large.wig \
-    -s 100000 -e 100000 -b output/trimmed_reads/MergedControls.trimmed.bam -g PAX6
-output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_PAX6_large_gc_corr.wig:
-	./scripts/GC_correct_wig_file.py -w output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_PAX6_large.wig -o output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_PAX6_large_gc_corr.wig \
-     -fa ~/RefSeq/hg19_070510/hg19.fa -ws 300 -gcf output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_PAX6_gc_control.txt
-output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_PAX6_large_smoothed_100bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_PAX6_large.wig -o output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_PAX6_large_smoothed_100bp.wig -w 100
-output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_PAX6_large_smoothed_400bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_PAX6_large.wig -o output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_PAX6_large_smoothed_400bp.wig -w 400
-output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_PAX6_large_smoothed_1000bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_PAX6_large.wig -o output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_PAX6_large_smoothed_1000bp.wig -w 1000
-
-#POU1F1
-output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_POU1F1_large.wig:
-	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_POU1F1_large.wig \
-    -s 100000 -e 100000 -b output/trimmed_reads/MergedControls.trimmed.bam -g POU1F1
-output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_POU1F1_large_gc_corr.wig:
-	./scripts/GC_correct_wig_file.py -w output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_POU1F1_large.wig -o output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_POU1F1_large_gc_corr.wig \
-     -fa ~/RefSeq/hg19_070510/hg19.fa -ws 300 -gcf output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_PAX6_gc_control.txt
-output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_POU1F1_large_smoothed_100bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_POU1F1_large.wig -o output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_POU1F1_large_smoothed_100bp.wig -w 100
-output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_POU1F1_large_smoothed_400bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_POU1F1_large.wig -o output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_POU1F1_large_smoothed_400bp.wig -w 400
-output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_POU1F1_large_smoothed_1000bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_POU1F1_large.wig -o output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_POU1F1_large_smoothed_1000bp.wig -w 1000
-
-#VSX1
-output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_VSX1_large.wig:
-	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_VSX1_large.wig \
-    -s 100000 -e 100000 -b output/trimmed_reads/MergedControls.trimmed.bam -g VSX1
-output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_VSX1_large_gc_corr.wig:
-	./scripts/GC_correct_wig_file.py -w output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_VSX1_large.wig -o output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_VSX1_large_gc_corr.wig \
-     -fa ~/RefSeq/hg19_070510/hg19.fa -ws 300 -gcf output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_VSX1_gc_control.txt
-output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_VSX1_large_smoothed_100bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_VSX1_large.wig -o output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_VSX1_large_smoothed_100bp.wig -w 100
-output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_VSX1_large_smoothed_400bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_VSX1_large.wig -o output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_VSX1_large_smoothed_400bp.wig -w 400
-output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_VSX1_large_smoothed_1000bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_VSX1_large.wig -o output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_VSX1_large_smoothed_1000bp.wig -w 1000
-
-#GLRA2
-output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_GLRA2_large.wig:
-	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_GLRA2_large.wig \
-    -s 100000 -e 100000 -b output/trimmed_reads/MergedControls.trimmed.bam -g GLRA2
-output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_GLRA2_large_gc_corr.wig:
-	./scripts/GC_correct_wig_file.py -w output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_GLRA2_large.wig -o output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_GLRA2_large_gc_corr.wig \
-     -fa ~/RefSeq/hg19_070510/hg19.fa -ws 300 -gcf output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_GLRA2_gc_control.txt
-output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_GLRA2_large_smoothed_100bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_GLRA2_large.wig -o output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_GLRA2_large_smoothed_100bp.wig -w 100
-output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_GLRA2_large_smoothed_400bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_GLRA2_large.wig -o output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_GLRA2_large_smoothed_400bp.wig -w 400
-output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_GLRA2_large_smoothed_1000bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_GLRA2_large.wig -o output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_GLRA2_large_smoothed_1000bp.wig -w 1000
-
-#GPR50
-output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_GPR50_large.wig:
-	./scripts/single_gene_wig_from_bam.py -rg ./ref/refSeq_extended_names_strand.bed -w output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_GPR50_large.wig \
-    -s 100000 -e 100000 -b output/trimmed_reads/MergedControls.trimmed.bam -g GPR50
-output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_GPR50_large_gc_corr.wig:
-	./scripts/GC_correct_wig_file.py -w output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_GPR50_large.wig -o output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_GPR50_large_gc_corr.wig \
-     -fa ~/RefSeq/hg19_070510/hg19.fa -ws 300 -gcf output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_GPR50_gc_control.txt
-output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_GPR50_large_smoothed_100bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_GPR50_large.wig -o output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_GPR50_large_smoothed_100bp.wig -w 100
-output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_GPR50_large_smoothed_400bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_GPR50_large.wig -o output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_GPR50_large_smoothed_400bp.wig -w 400
-output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_GPR50_large_smoothed_1000bp.wig:
-	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_GPR50_large.wig -o output/Single_Genes_Wig/Whole-blood_Unexpressed/Merged_Controls_GPR50_large_smoothed_1000bp.wig -w 1000
-
+    -s 100000 -e 100000 -b output/trimmed_reads/ProstateCancer_rmdup_trimmed.bam -g AR
+output/Single_Genes_Wig/Prostate_Cancer_AR_large_smoothed_100bp.wig:
+	./scripts/smooth_wig_file.py -wig output/Single_Genes_Wig/Prostate_Cancer_AR_large.wig -o output/Single_Genes_Wig/Prostate_Cancer_AR_large_smoothed_100bp.wig -w 100
 
 ####################################################################################################################################
 # 6
@@ -1182,85 +702,122 @@ output/TSS_coverage/Prostate_specific/Prostate_Cancer_Prostate_Specific_tss.txt:
 	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Prostate_specific/Prostate_Cancer_Prostate_Specific_tss.txt
 
 ####################################################################################################################################
-# Check coverage around TSS between expressed and unexpressed genes
-output/PredictActiveGenes/MergedMale_Expression.txt:
-	./scripts/analyze_active_genes_by_TSS_coverage.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/Merged_Male_Controls_trim60bp.sorted.bam \
-    -t 4 -egl ./ref/Expression_atlas_GTEx_whole_blood_FPKM5_names_only.csv -uegl ./ref/GTEx/Genes_not_expressed_in_blood_but_other_tissue.txt  \
-    > output/PredictActiveGenes/MergedMale_Expression.txt
-output/PredictActiveGenes/MergedFemale_Expression.txt:
-	./scripts/analyze_active_genes_by_TSS_coverage.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/Merged_Female_Controls_trim60bp.sorted.bam \
-    -t 4 -egl ./ref/Expression_atlas_GTEx_whole_blood_FPKM5_names_only.csv -uegl ./ref/GTEx/Genes_not_expressed_in_blood_but_other_tissue.txt  \
-    > output/PredictActiveGenes/MergedFemale_Expression.txt
-output/PredictActiveGenes/MergedMale_LowPassSlope.txt:
-	./scripts/analyze_active_genes_by_low_pass_slope_coverage.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/Merged_Male_Controls_trim60bp.sorted.bam \
-    -t 4 -egl ./ref/Expression_atlas_GTEx_whole_blood_FPKM5_names_only.csv -uegl ./ref/GTEx/Genes_not_expressed_in_blood_but_other_tissue.txt  \
-    > output/PredictActiveGenes/MergedMale_LowPassSlope.txt
-output/PredictActiveGenes/MergedFemale_LowPassSlope.txt:
-	./scripts/analyze_active_genes_by_low_pass_slope_coverage.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/Merged_Female_Controls_trim60bp.sorted.bam \
-    -t 4 -egl ./ref/Expression_atlas_GTEx_whole_blood_FPKM5_names_only.csv -uegl ./ref/GTEx/Genes_not_expressed_in_blood_but_other_tissue.txt  \
-    > output/PredictActiveGenes/MergedFemale_LowPassSlope.txt
-output/PredictActiveGenes/MergedMale_Amplitude.txt:
-	./scripts/analyze_active_genes_by_amplitude.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/Merged_Male_Controls_trim60bp.sorted.bam \
-    -t 10 -egl ./ref/Expression_atlas_GTEx_whole_blood_FPKM5_names_only.csv -uegl ./ref/GTEx/Genes_not_expressed_in_blood_but_other_tissue.txt -s 100 -e 100 \
-    > output/PredictActiveGenes/MergedMale_Amplitude.txt
-output/PredictActiveGenes/MergedFemale_Amplitude.txt:
-	./scripts/analyze_active_genes_by_amplitude.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/Merged_Female_Controls_trim60bp.sorted.bam \
-    -t 10 -egl ./ref/Expression_atlas_GTEx_whole_blood_FPKM5_names_only.csv -uegl ./ref/GTEx/Genes_not_expressed_in_blood_but_other_tissue.txt -s 100 -e 100 \
-	> output/PredictActiveGenes/MergedFemale_Amplitude.txt
-output/PredictActiveGenes/MergedControls_Amplitude.txt:
-	./scripts/analyze_active_genes_by_amplitude.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/MergedControls.trimmed.bam \
+#  Try to predict whether single genes are expressed by analysis of
+#    1) Mean Coverage +/- 1000bp around Transcription start site
+#    2) Slope of 400bp-smoothed coverage data in
+#       2.1) 1000bp before TSS and TSS (5' Slope, should be negative for expressed genes)
+#       2.2) TSS and 1000bp into gene (3' Slope, should be positive for expressed genes)
+#    3) Coverage in smaller region around TSS (-150;+50); corrected by mean coverage of +/-1000bp around TSS
+
+#Merged Controls
+output/PredictActiveGenes/Merged_Controls/MergedControls_TSSCoverage_PlasmaRNASeq_NMonly.txt:
+	./scripts/analyze_active_genes_by_TSS_coverage.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam \
     -t 10 -egl ./ref/Plasma-RNASeq/Top1000_NMonly.txt -uegl ./ref/Plasma-RNASeq/Bottom1000_NMonly.txt \
-	> output/PredictActiveGenes/MergedFemale_Amplitude_NMonly.txt
-output/PredictActiveGenes/MergedControls_TSSCoverage_PlasmaRNASeq_NMonly.txt:
-	./scripts/analyze_active_genes_by_TSS_coverage.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/MergedControls.trimmed.bam \
-    -t 10 -egl ./ref/Plasma-RNASeq/Top1000_NMonly.txt -uegl ./ref/Plasma-RNASeq/Bottom1000_NMonly.txt \
-    > output/PredictActiveGenes/MergedControls_TSSCoverage_PlasmaRNASeq_NMonly.txt
-output/PredictActiveGenes/MergedControls_TSSCoverage_small_PlasmaRNASeq_NMonly.txt:
-	./scripts/analyze_active_genes_by_TSS_coverage_small.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/MergedControls.trimmed.bam \
-    -t 10 -egl ./ref/Plasma-RNASeq/Top1000_NMonly.txt -uegl ./ref/Plasma-RNASeq/Bottom1000_NMonly.txt -ws 1000 -we 1000 -ss 200 -se 30 \
-    > output/PredictActiveGenes/MergedControls_TSSCoverage_smallPlasmaRNASeq_NMonly.txt
-output/PredictActiveGenes/MergedControls_LowPass_Slope_PlasmaRNASeq_NMonly.txt:
-	./scripts/analyze_active_genes_by_low_pass_slope_coverage.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/MergedControls.trimmed.bam \
+    > output/PredictActiveGenes/Merged_Controls/MergedControls_TSSCoverage_PlasmaRNASeq_NMonly.txt
+output/PredictActiveGenes/Merged_Controls/MergedControls_TSSCoverage_small_PlasmaRNASeq_NMonly.txt:
+	./scripts/analyze_active_genes_by_TSS_coverage_small.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam \
+    -t 10 -egl ./ref/Plasma-RNASeq/Top1000_NMonly.txt -uegl ./ref/Plasma-RNASeq/Bottom1000_NMonly.txt -ws 1000 -we 1000 -ss 150 -se 50 \
+    > output/PredictActiveGenes/Merged_Controls/MergedControls_TSSCoverage_smallPlasmaRNASeq_NMonly.txt
+output/PredictActiveGenes/Merged_Controls/MergedControls_LowPass_Slope_PlasmaRNASeq_NMonly.txt:
+	./scripts/analyze_active_genes_by_low_pass_slope_coverage.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam \
     -t 10 -egl ./ref/Plasma-RNASeq/Top1000_NMonly.txt -uegl ./ref/Plasma-RNASeq/Bottom1000_NMonly.txt -tmp ./intermediate/slope/ \
-    > output/PredictActiveGenes/MergedControls_LowPass_Slope_PlasmaRNASeq_NMonly.txt
-output/PredictActiveGenes/MergedControls_Amplitude_PlasmaRNASeq_NMonly.txt:
-	./scripts/analyze_active_genes_by_amplitude.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/MergedControls.trimmed.bam \
+    > output/PredictActiveGenes/Merged_Controls/MergedControls_LowPass_Slope_PlasmaRNASeq_NMonly.txt
+output/PredictActiveGenes/Merged_Controls/MergedControls_prediction_data.csv:
+	./scripts/combine_prediction_parameters.py -o output/PredictActiveGenes/Merged_Controls/MergedControls_prediction_data.csv \
+    -bcov output/PredictActiveGenes/Merged_Controls/MergedControls_TSSCoverage_PlasmaRNASeq_NMonly.txt \
+    -scov output/PredictActiveGenes/Merged_Controls/MergedControls_TSSCoverage_small_PlasmaRNASeq_NMonly.txt \
+    -slope output/PredictActiveGenes/Merged_Controls/MergedControls_LowPass_Slope_PlasmaRNASeq_NMonly.txt
+
+#Male Controls 
+output/PredictActiveGenes/Male_Controls/Male_Controls_TSSCoverage_PlasmaRNASeq_NMonly.txt:
+	./scripts/analyze_active_genes_by_TSS_coverage.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/Merged_Male_Controls_rmdup_trimmed.bam \
     -t 10 -egl ./ref/Plasma-RNASeq/Top1000_NMonly.txt -uegl ./ref/Plasma-RNASeq/Bottom1000_NMonly.txt \
-    > output/PredictActiveGenes/MergedControls_Amplitude_PlasmaRNASeq_NMonly.txt
+    > output/PredictActiveGenes/Male_Controls/Male_Controls_TSSCoverage_PlasmaRNASeq_NMonly.txt
+output/PredictActiveGenes/Male_Controls/Male_Controls_TSSCoverage_small_PlasmaRNASeq_NMonly.txt:
+	./scripts/analyze_active_genes_by_TSS_coverage_small.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/Merged_Male_Controls_rmdup_trimmed.bam \
+    -t 10 -egl ./ref/Plasma-RNASeq/Top1000_NMonly.txt -uegl ./ref/Plasma-RNASeq/Bottom1000_NMonly.txt -ws 1000 -we 1000 -ss 150 -se 50 \
+    > output/PredictActiveGenes/Male_Controls/Male_Controls_TSSCoverage_smallPlasmaRNASeq_NMonly.txt
+output/PredictActiveGenes/Male_Controls/Male_Controls_LowPass_Slope_PlasmaRNASeq_NMonly.txt:
+	./scripts/analyze_active_genes_by_low_pass_slope_coverage.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/Merged_Male_Controls_rmdup_trimmed.bam \
+    -t 10 -egl ./ref/Plasma-RNASeq/Top1000_NMonly.txt -uegl ./ref/Plasma-RNASeq/Bottom1000_NMonly.txt -tmp ./intermediate/slope/ \
+    > output/PredictActiveGenes/Male_Controls/Male_Controls_LowPass_Slope_PlasmaRNASeq_NMonly.txt
+output/PredictActiveGenes/Male_Controls/Male_Controls_prediction_data.csv:
+	./scripts/combine_prediction_parameters.py -o output/PredictActiveGenes/Male_Controls/Male_Controls_prediction_data.csv \
+    -bcov output/PredictActiveGenes/Male_Controls/Male_Controls_TSSCoverage_PlasmaRNASeq_NMonly.txt \
+    -scov output/PredictActiveGenes/Male_Controls/Male_Controls_TSSCoverage_small_PlasmaRNASeq_NMonly.txt \
+    -slope output/PredictActiveGenes/Male_Controls/Male_Controls_LowPass_Slope_PlasmaRNASeq_NMonly.txt
+
+#Female Controls 
+output/PredictActiveGenes/Female_Controls/Female_Controls_TSSCoverage_PlasmaRNASeq_NMonly.txt:
+	./scripts/analyze_active_genes_by_TSS_coverage.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/Merged_Female_Controls_rmdup_trimmed.bam \
+    -t 10 -egl ./ref/Plasma-RNASeq/Top1000_NMonly.txt -uegl ./ref/Plasma-RNASeq/Bottom1000_NMonly.txt \
+    > output/PredictActiveGenes/Female_Controls/Female_Controls_TSSCoverage_PlasmaRNASeq_NMonly.txt
+output/PredictActiveGenes/Female_Controls/Female_Controls_TSSCoverage_small_PlasmaRNASeq_NMonly.txt:
+	./scripts/analyze_active_genes_by_TSS_coverage_small.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/Merged_Female_Controls_rmdup_trimmed.bam \
+    -t 10 -egl ./ref/Plasma-RNASeq/Top1000_NMonly.txt -uegl ./ref/Plasma-RNASeq/Bottom1000_NMonly.txt -ws 1000 -we 1000 -ss 150 -se 50 \
+    > output/PredictActiveGenes/Female_Controls/Female_Controls_TSSCoverage_smallPlasmaRNASeq_NMonly.txt
+output/PredictActiveGenes/Female_Controls/Female_Controls_LowPass_Slope_PlasmaRNASeq_NMonly.txt:
+	./scripts/analyze_active_genes_by_low_pass_slope_coverage.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/Merged_Female_Controls_rmdup_trimmed.bam \
+    -t 10 -egl ./ref/Plasma-RNASeq/Top1000_NMonly.txt -uegl ./ref/Plasma-RNASeq/Bottom1000_NMonly.txt -tmp ./intermediate/slope/ \
+    > output/PredictActiveGenes/Female_Controls/Female_Controls_LowPass_Slope_PlasmaRNASeq_NMonly.txt
+output/PredictActiveGenes/Female_Controls/Female_Controls_prediction_data.csv:
+	./scripts/combine_prediction_parameters.py -o output/PredictActiveGenes/Female_Controls/Female_Controls_prediction_data.csv \
+    -bcov output/PredictActiveGenes/Female_Controls/Female_Controls_TSSCoverage_PlasmaRNASeq_NMonly.txt \
+    -scov output/PredictActiveGenes/Female_Controls/Female_Controls_TSSCoverage_small_PlasmaRNASeq_NMonly.txt \
+    -slope output/PredictActiveGenes/Female_Controls/Female_Controls_LowPass_Slope_PlasmaRNASeq_NMonly.txt
+
+#CNV samples 
+output/PredictActiveGenes/CNVsamples/CNV_samples_TSSCoverage_PlasmaRNASeq_NMonly.txt:
+	./scripts/analyze_active_genes_by_TSS_coverage.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/CNV_samples_rmdup_trimmed.bam \
+    -t 10 -egl ./ref/Plasma-RNASeq/Top1000_NMonly.txt -uegl ./ref/Plasma-RNASeq/Bottom1000_NMonly.txt \
+    > output/PredictActiveGenes/CNVsamples/CNV_samples_TSSCoverage_PlasmaRNASeq_NMonly.txt
+output/PredictActiveGenes/CNVsamples/CNV_samples_TSSCoverage_small_PlasmaRNASeq_NMonly.txt:
+	./scripts/analyze_active_genes_by_TSS_coverage_small.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/CNV_samples_rmdup_trimmed.bam \
+    -t 10 -egl ./ref/Plasma-RNASeq/Top1000_NMonly.txt -uegl ./ref/Plasma-RNASeq/Bottom1000_NMonly.txt -ws 1000 -we 1000 -ss 150 -se 50 \
+    > output/PredictActiveGenes/CNVsamples/CNV_samples_TSSCoverage_smallPlasmaRNASeq_NMonly.txt
+output/PredictActiveGenes/CNVsamples/CNV_samples_LowPass_Slope_PlasmaRNASeq_NMonly.txt:
+	./scripts/analyze_active_genes_by_low_pass_slope_coverage.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/CNV_samples_rmdup_trimmed.bam \
+    -t 10 -egl ./ref/Plasma-RNASeq/Top1000_NMonly.txt -uegl ./ref/Plasma-RNASeq/Bottom1000_NMonly.txt -tmp ./intermediate/slope/ \
+    > output/PredictActiveGenes/CNVsamples/CNV_samples_LowPass_Slope_PlasmaRNASeq_NMonly.txt
+output/PredictActiveGenes/CNVsamples/CNV_samples_prediction_data.csv:
+	./scripts/combine_prediction_parameters.py -o output/PredictActiveGenes/CNVsamples/CNV_samples_prediction_data.csv \
+    -bcov output/PredictActiveGenes/CNVsamples/CNV_samples_TSSCoverage_PlasmaRNASeq_NMonly.txt \
+    -scov output/PredictActiveGenes/CNVsamples/CNV_samples_TSSCoverage_small_PlasmaRNASeq_NMonly.txt \
+    -slope output/PredictActiveGenes/CNVsamples/CNV_samples_LowPass_Slope_PlasmaRNASeq_NMonly.txt
 
 #"Dilution" series adding more and more genes and see wether there is an upward trend in coverage
-output/PredictActiveGenes/MergedControls_TSSCoverage_PlasmaRNASeq_Top20_NMonly.txt:
-	./scripts/analyze_active_genes_by_TSS_coverage.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/MergedControls.trimmed.bam \
+output/PredictActiveGenes/Dilution/MergedControls_TSSCoverage_PlasmaRNASeq_Top20_NMonly.txt:
+	./scripts/analyze_active_genes_by_TSS_coverage.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam \
     -t 1 -egl ./ref/Plasma-RNASeq/Top20_NMonly.txt -uegl ./ref/Plasma-RNASeq/Bottom50_NM.txt \
-    > output/PredictActiveGenes/MergedControls_TSSCoverage_PlasmaRNASeq_Top20_NMonly.txt
-output/PredictActiveGenes/MergedControls_TSSCoverage_PlasmaRNASeq_Top50_NMonly.txt:
-	./scripts/analyze_active_genes_by_TSS_coverage.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/MergedControls.trimmed.bam \
+    > output/PredictActiveGenes/Dilution/MergedControls_TSSCoverage_PlasmaRNASeq_Top20_NMonly.txt
+output/PredictActiveGenes/Dilution/MergedControls_TSSCoverage_PlasmaRNASeq_Top50_NMonly.txt:
+	./scripts/analyze_active_genes_by_TSS_coverage.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam \
     -t 1 -egl ./ref/Plasma-RNASeq/Top50_NMonly.txt -uegl ./ref/Plasma-RNASeq/Bottom50_NM.txt \
-    > output/PredictActiveGenes/MergedControls_TSSCoverage_PlasmaRNASeq_Top50_NMonly.txt
-output/PredictActiveGenes/MergedControls_TSSCoverage_PlasmaRNASeq_Top100_NMonly.txt:
-	./scripts/analyze_active_genes_by_TSS_coverage.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/MergedControls.trimmed.bam \
+    > output/PredictActiveGenes/Dilution/MergedControls_TSSCoverage_PlasmaRNASeq_Top50_NMonly.txt
+output/PredictActiveGenes/Dilution/MergedControls_TSSCoverage_PlasmaRNASeq_Top100_NMonly.txt:
+	./scripts/analyze_active_genes_by_TSS_coverage.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam \
     -t 2 -egl ./ref/Plasma-RNASeq/Top100_NMonly.txt -uegl ./ref/Plasma-RNASeq/Bottom50_NM.txt \
-    > output/PredictActiveGenes/MergedControls_TSSCoverage_PlasmaRNASeq_Top100_NMonly.txt
-output/PredictActiveGenes/MergedControls_TSSCoverage_PlasmaRNASeq_Top500_NMonly.txt:
-	./scripts/analyze_active_genes_by_TSS_coverage.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/MergedControls.trimmed.bam \
+    > output/PredictActiveGenes/Dilution/MergedControls_TSSCoverage_PlasmaRNASeq_Top100_NMonly.txt
+output/PredictActiveGenes/Dilution/MergedControls_TSSCoverage_PlasmaRNASeq_Top500_NMonly.txt:
+	./scripts/analyze_active_genes_by_TSS_coverage.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam \
     -t 3 -egl ./ref/Plasma-RNASeq/Top500_NMonly.txt -uegl ./ref/Plasma-RNASeq/Bottom50_NM.txt \
-    > output/PredictActiveGenes/MergedControls_TSSCoverage_PlasmaRNASeq_Top500_NMonly.txt
-output/PredictActiveGenes/MergedControls_TSSCoverage_PlasmaRNASeq_Top1000_NMonly.txt:
-	./scripts/analyze_active_genes_by_TSS_coverage.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/MergedControls.trimmed.bam \
+    > output/PredictActiveGenes/Dilution/MergedControls_TSSCoverage_PlasmaRNASeq_Top500_NMonly.txt
+output/PredictActiveGenes/Dilution/MergedControls_TSSCoverage_PlasmaRNASeq_Top1000_NMonly.txt:
+	./scripts/analyze_active_genes_by_TSS_coverage.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam \
     -t 10 -egl ./ref/Plasma-RNASeq/Top1000_NMonly.txt -uegl ./ref/Plasma-RNASeq/Bottom1000_NMonly.txt \
-    > output/PredictActiveGenes/MergedControls_TSSCoverage_PlasmaRNASeq_Top1000_NMonly.txt
-output/PredictActiveGenes/MergedControls_TSSCoverage_PlasmaRNASeq_Top5000_NMonly.txt:
-	./scripts/analyze_active_genes_by_TSS_coverage.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/MergedControls.trimmed.bam \
+    > output/PredictActiveGenes/Dilution/MergedControls_TSSCoverage_PlasmaRNASeq_Top1000_NMonly.txt
+output/PredictActiveGenes/Dilution/MergedControls_TSSCoverage_PlasmaRNASeq_Top5000_NMonly.txt:
+	./scripts/analyze_active_genes_by_TSS_coverage.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam \
     -t 10 -egl ./ref/Plasma-RNASeq/Top5000_NMonly.txt -uegl ./ref/Plasma-RNASeq/Bottom50_NM.txt \
-    > output/PredictActiveGenes/MergedControls_TSSCoverage_PlasmaRNASeq_Top5000_NMonly.txt
-output/PredictActiveGenes/MergedControls_TSSCoverage_PlasmaRNASeq_Top10000_NMonly.txt:
-	./scripts/analyze_active_genes_by_TSS_coverage.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/MergedControls.trimmed.bam \
+    > output/PredictActiveGenes/Dilution/MergedControls_TSSCoverage_PlasmaRNASeq_Top5000_NMonly.txt
+output/PredictActiveGenes/Dilution/MergedControls_TSSCoverage_PlasmaRNASeq_Top10000_NMonly.txt:
+	./scripts/analyze_active_genes_by_TSS_coverage.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam \
     -t 10 -egl ./ref/Plasma-RNASeq/Top10000_NMonly.txt -uegl ./ref/Plasma-RNASeq/Bottom50_NM.txt \
-    > output/PredictActiveGenes/MergedControls_TSSCoverage_PlasmaRNASeq_Top10000_NMonly.txt
-output/PredictActiveGenes/MergedControls_TSSCoverage_PlasmaRNASeq_Top15000_NMonly.txt:
-	./scripts/analyze_active_genes_by_TSS_coverage.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/MergedControls.trimmed.bam \
+    > output/PredictActiveGenes/Dilution/MergedControls_TSSCoverage_PlasmaRNASeq_Top10000_NMonly.txt
+output/PredictActiveGenes/Dilution/MergedControls_TSSCoverage_PlasmaRNASeq_Top15000_NMonly.txt:
+	./scripts/analyze_active_genes_by_TSS_coverage.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam \
     -t 10 -egl ./ref/Plasma-RNASeq/Top15000_NMonly.txt -uegl ./ref/Plasma-RNASeq/Bottom50_NM.txt \
-    > output/PredictActiveGenes/MergedControls_TSSCoverage_PlasmaRNASeq_Top15000_NMonly.txt
+    > output/PredictActiveGenes/Dilution/MergedControls_TSSCoverage_PlasmaRNASeq_Top15000_NMonly.txt
 ####################################################################################################################################
 #
 # Check paired end plasma-samples for
@@ -1289,8 +846,10 @@ output/alignments/Merged_Paired.insertsize.pdf:
 # Create wig file for ordered array at Gaffney site: Hg19:chr12:34,484,733-34,560,733 
 output/Gaffney_nucleosome_array/MergedMaleControls_Gaffney_site.wig:
 	./scripts/single_region_wig_from_bam.py -chr chr12 -s 34484000 -e 34561000 -b output/trimmed_reads/Merged_Male_Controls_rmdup_trimmed.bam -w output/Gaffney_nucleosome_array/MergedMaleControls_Gaffney_site.wig
-output/Gaffney_nucleosome_array/MergedMaleControls_wrongtrim_Gaffney_site.wig:
-	./scripts/single_region_wig_from_bam.py -chr chr12 -s 34484000 -e 34561000 -b output/trimmed_reads/Merged_Male_Controls_trim60bp.sorted.bam -w output/Gaffney_nucleosome_array/MergedMaleControls_wrongtrim_Gaffney_site.wig
+output/Gaffney_nucleosome_array/MergedControls_Gaffney_site.wig:
+	./scripts/single_region_wig_from_bam.py -chr chr12 -s 34484000 -e 34561000 -b output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam -w output/Gaffney_nucleosome_array/MergedControls_Gaffney_site.wig
+output/Gaffney_nucleosome_array/MergedFemaleControls_Gaffney_site.wig:
+	./scripts/single_region_wig_from_bam.py -chr chr12 -s 34484000 -e 34561000 -b output/trimmed_reads/Merged_Female_Controls_rmdup_trimmed.bam -w output/Gaffney_nucleosome_array/MergedFemaleControls_Gaffney_site.wig
 ####################################################################################################################################
 #
 # Try to infer genes having 5' nucleosome depleted region and calculate TSS profile of these genes
