@@ -5,6 +5,7 @@
 import numpy
 import statsmodels.api
 from subprocess import call
+from scipy import interpolate
 import argparse
 import sys
 import os.path
@@ -41,6 +42,8 @@ parser.add_argument('-o','--output-file', dest='output_file',
                    help='BAM file',required=True)
 parser.add_argument('-ws','--window-size', dest='window_size',
                    help='Use this window size for GC correction',default=100,type=int)
+parser.add_argument('-gcf','--gc-file', dest='gc_file',
+                   help='Optionally specify a file to save GC content and raw/smoothed signal data')
 parser.add_argument('-fa','--fasta-file', dest='fasta',
                    help='Use this FastA file for GC calculation',required=True)
 
@@ -55,6 +58,9 @@ try:
 except:
     print "Can't open input file"
     sys.exit(1)
+
+if (args.gc_file != ""):
+    GC_FILE = open(args.gc_file,"w")
 
 chrom = None
 signal_list=list()
@@ -87,10 +93,15 @@ for line in INPUT.readlines():
         signal_gc.append(gc_content)
         last_position = int(position)
 
-lowess_signal = statsmodels.api.nonparametric.lowess(numpy.array(signal_list),numpy.log(numpy.array(signal_gc)),return_sorted=False)
+lowess_signal = statsmodels.api.nonparametric.lowess(numpy.array(signal_list),numpy.log(numpy.array(signal_gc)),frac=0.05,return_sorted=False)
+interpolated_signal = statsmodels.api.nonparametric.lowess(numpy.array(signal_list),numpy.log(numpy.array(signal_gc)),frac=0.05,return_sorted=False)
 
 OUTPUT.write(header.rstrip()+"gc_corrected_"+str(args.window_size)+"\n")
 OUTPUT.write(varheader)
 for i in range(0,len(signal_list)):
-    #OUTPUT.write(position_list[i]+"\t"+str(signal_list[i])+"\t"+str(signal_gc[i])+"\t"+str(lowess_signal[i])+"\n")
+    if (args.gc_file != ""):
+        GC_FILE.write(position_list[i]+"\t"+str(signal_list[i])+"\t"+str(signal_gc[i])+"\t"+str(lowess_signal[i])+"\n")
     OUTPUT.write(position_list[i]+"\t"+str(lowess_signal[i])+"\n")
+
+if (args.gc_file != ""):
+    GC_FILE.close()

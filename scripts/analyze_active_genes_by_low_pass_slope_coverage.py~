@@ -2,6 +2,7 @@
 
 #Analyze read depth in comparison to transcription start
 
+#V2: replace mean slope by regression line fitting
 import sys
 import argparse
 from subprocess import call
@@ -28,11 +29,11 @@ def sliding_window(data, window_size = 400):
     return data_smoothed
 
 # sliding window smoothing ###################################################################################
-def mean_slope(data):
-    cum_slope = 0
-    for i in range(1,len(data)):
-        cum_slope += data[i]-data[i-1]
-    return float(cum_slope) / float(len(data))
+#def mean_slope(data):
+#    cum_slope = 0
+#    for i in range(1,len(data)):
+#        cum_slope += data[i]-data[i-1]
+#    return float(cum_slope) / float(len(data))
 
 # Run this for each thread ###################################################################################
 def thread_proc(q,thread_number,transcript_list):
@@ -72,11 +73,11 @@ def thread_proc(q,thread_number,transcript_list):
             continue
         tss_visited.append(chrom+"_"+str(pos))
 
-        TMP_COVERAGE_BED = open("intermediate/"+os.path.basename(args.bam_file)+str(thread_number)+"tmp_coverage.bed","w")
+        TMP_COVERAGE_BED = open(args.temp_dir+os.path.basename(args.bam_file)+str(thread_number)+"tmp_coverage.bed","w")
         call(["samtools","depth","-r",chrom+":"+str(pos-args.start)+"-"+str(pos+args.end),args.bam_file],stdout=TMP_COVERAGE_BED)
         TMP_COVERAGE_BED.close()
     
-        TMP_COVERAGE_BED_OUTPUT = open("intermediate/"+os.path.basename(args.bam_file)+str(thread_number)+"tmp_coverage.bed","r")
+        TMP_COVERAGE_BED_OUTPUT = open(args.temp_dir+os.path.basename(args.bam_file)+str(thread_number)+"tmp_coverage.bed","r")
         content = TMP_COVERAGE_BED_OUTPUT.readlines()
         for i in range(pos-args.start,pos+args.start):
             found = False
@@ -97,10 +98,17 @@ def thread_proc(q,thread_number,transcript_list):
                 elif not forward:      
                     coverage_list[-(i-pos)] = 0
         TMP_COVERAGE_BED_OUTPUT.close()
-        call(["rm","intermediate/"+os.path.basename(args.bam_file)+str(thread_number)+"tmp_coverage.bed"])    
-        smoothed_data = sliding_window(coverage_list.values())   
-        slope_5_dict[gene_name] = mean_slope(smoothed_data[:int(0.5*len(smoothed_data))])
-        slope_3_dict[gene_name] = mean_slope(smoothed_data[int(0.5*len(smoothed_data)):])
+        call(["rm",args.temp_dir+os.path.basename(args.bam_file)+str(thread_number)+"tmp_coverage.bed"])    
+        list_values_in_order = list()
+        for i in range(-args.start,0):
+            list_values_in_order.append(coverage_list[i])
+        for i in range(0,args.end+1):
+            list_values_in_order.append(coverage_list[i])
+        smoothed_data = sliding_window(list_values_in_order)   
+   
+        #fit a regression line instaed of calculating mean slopes
+        slope_5_dict[gene_name] = numpy.polyfit(range(0,len(smoothed_data))[:int(0.5*len(smoothed_data))],smoothed_data[:int(0.5*len(smoothed_data))],1)[0]
+        slope_3_dict[gene_name] = numpy.polyfit(range(-args.start,args.start+1)[int(0.5*len(smoothed_data)):],smoothed_data[int(0.5*len(smoothed_data)):],1)[0]
     
     sys.stderr.write("\rThread "+str(thread_number)+"\t finished\n")
     sys.stderr.flush() 
@@ -123,9 +131,13 @@ parser.add_argument('-egl','--expr-gene-list', dest='expr_gene_list',
                    help='List of gene names believed to be expressed',required=True)
 parser.add_argument('-uegl','--unexpr-gene-list', dest='unexpr_gene_list',
                    help='List of gene names believed to be unexpressed',required=True)
+parser.add_argument('-tmp','--temp-dir', dest='temp_dir',
+                   help='Temporary Directory',default="./intermediate/")
 
 
 args = parser.parse_args()
+if args.temp_dir[-1:] != "/":
+    args.temp_dir = args.temp_dir+"/"
 sys.stderr.write("Bam file: "+args.bam_file+"\n")
 sys.stderr.write("RefGene file: "+args.refgene_file+"\n")
 sys.stderr.write("Expressed Genes: "+str(args.expr_gene_list)+"\n")
