@@ -11,6 +11,7 @@ import scipy.stats
 import os.path
 import multiprocessing
 
+#Update 9.12. correct mean coverage by analyzing 2000bp in 10000bp upstream of gene
 
 # Calculate mean and confidence intervals ###################################################################################
 def mean_confidence_interval(data, confidence=0.95):
@@ -19,6 +20,41 @@ def mean_confidence_interval(data, confidence=0.95):
     m, se = numpy.mean(a), scipy.stats.sem(a)
     h = se * scipy.stats.t.ppf((1+confidence)/2., n-1)
     return m, m-h, m+h
+
+
+# Calculate mean coverage in 10000bp upstream sequence ###################################################################################
+def calcLocalMean(position, chrom, thread_number):
+    coverage_list=dict()
+    pos = position + 10000
+    TMP_COVERAGE_BED = open("intermediate/"+os.path.basename(args.bam_file)+str(thread_number)+"tmp_coverage_10000bpupstream.bed","w")
+    call(["samtools","depth","-r",chrom+":"+str(pos-args.start)+"-"+str(pos+args.end),args.bam_file],stdout=TMP_COVERAGE_BED)
+    TMP_COVERAGE_BED.close()
+    
+    TMP_COVERAGE_BED_OUTPUT = open("intermediate/"+os.path.basename(args.bam_file)+str(thread_number)+"tmp_coverage_10000bpupstream.bed","r")
+    content = TMP_COVERAGE_BED_OUTPUT.readlines()
+    for i in range(pos-args.start,pos+args.start):
+        found = False
+        for line in content:
+            chrom_found = line.split()[0]
+            pos_found = int(line.split()[1])
+            if pos_found == i:
+                found = True
+                coverage = int(line.split()[2])
+                if forward:
+                    coverage_list[i-pos] = coverage
+                elif not forward:
+                    coverage_list[-(i-pos)] = coverage
+                continue
+        if not found:
+            if forward:
+                coverage_list[i-pos] = 0
+            elif not forward:      
+                coverage_list[-(i-pos)] = 0
+
+    TMP_COVERAGE_BED_OUTPUT.close()
+    call(["rm","intermediate/"+os.path.basename(args.bam_file)+str(thread_number)+"tmp_coverage_10000bpupstream.bed"])    
+    mean,lower,upper = mean_confidence_interval(coverage_list.values())
+    return mean
 
 # Run this for each thread ###################################################################################
 def thread_proc(q,thread_number,transcript_list):
@@ -84,6 +120,7 @@ def thread_proc(q,thread_number,transcript_list):
         TMP_COVERAGE_BED_OUTPUT.close()
         call(["rm","intermediate/"+os.path.basename(args.bam_file)+str(thread_number)+"tmp_coverage.bed"])    
         mean,lower,upper = mean_confidence_interval(coverage_list.values())
+        control_region_mean = calcLocalMean(pos, chrom, thread_number)
         coverage_dict[gene_name] = mean
     
     sys.stderr.write("\rThread "+str(thread_number)+"\t finished\n")

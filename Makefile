@@ -397,6 +397,13 @@ output/TSS_coverage/PlasmaRNASeq/Merged_Female_Controls_Plasma_Top20_tss.txt: ./
 	./scripts/analyze_TSS_coverage.py -gl ref/Plasma-RNASeq/Top20_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Female_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/PlasmaRNASeq/Merged_Female_Controls_Plasma_Top20_tss.txt
 	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/Merged_Female_Controls_Plasma_Top20_tss.txt
 	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/Merged_Female_Controls_Plasma_Top20_tss.txt
+
+#Top20 but without any Hemoglobin gene
+output/TSS_coverage/PlasmaRNASeq/MergedControls_Plasma_Top20_tss_noHemoglobin.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -gl ref/Plasma-RNASeq/Top20_NMonly_noHemoglobin.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/PlasmaRNASeq/MergedControls_Plasma_Top20_tss_noHemoglobin.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/MergedControls_Plasma_Top20_tss_noHemoglobin.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/MergedControls_Plasma_Top20_tss_noHemoglobin.txt
+
 #Top50
 output/TSS_coverage/PlasmaRNASeq/MergedControls_Plasma_Top50_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
 	./scripts/analyze_TSS_coverage.py -gl ref/Plasma-RNASeq/Top50_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/PlasmaRNASeq/MergedControls_Plasma_Top50_tss.txt
@@ -702,7 +709,7 @@ output/TSS_coverage/Prostate_specific/Prostate_Cancer_Prostate_Specific_tss.txt:
 	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Prostate_specific/Prostate_Cancer_Prostate_Specific_tss.txt
 
 ####################################################################################################################################
-#  Try to predict whether single genes are expressed by analysis of
+#  Try to predict whether single genes are expressed by analysis of Top1000 and Bottom1000 genes at four parameters:
 #    1) Mean Coverage +/- 1000bp around Transcription start site
 #    2) Slope of 400bp-smoothed coverage data in
 #       2.1) 1000bp before TSS and TSS (5' Slope, should be negative for expressed genes)
@@ -717,7 +724,7 @@ output/PredictActiveGenes/Merged_Controls/MergedControls_TSSCoverage_PlasmaRNASe
 output/PredictActiveGenes/Merged_Controls/MergedControls_TSSCoverage_small_PlasmaRNASeq_NMonly.txt:
 	./scripts/analyze_active_genes_by_TSS_coverage_small.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam \
     -t 10 -egl ./ref/Plasma-RNASeq/Top1000_NMonly.txt -uegl ./ref/Plasma-RNASeq/Bottom1000_NMonly.txt -ws 1000 -we 1000 -ss 150 -se 50 \
-    > output/PredictActiveGenes/Merged_Controls/MergedControls_TSSCoverage_smallPlasmaRNASeq_NMonly.txt
+    > output/PredictActiveGenes/Merged_Controls/MergedControls_TSSCoverage_small_PlasmaRNASeq_NMonly.txt
 output/PredictActiveGenes/Merged_Controls/MergedControls_LowPass_Slope_PlasmaRNASeq_NMonly.txt:
 	./scripts/analyze_active_genes_by_low_pass_slope_coverage.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam \
     -t 10 -egl ./ref/Plasma-RNASeq/Top1000_NMonly.txt -uegl ./ref/Plasma-RNASeq/Bottom1000_NMonly.txt -tmp ./intermediate/slope/ \
@@ -736,7 +743,7 @@ output/PredictActiveGenes/Male_Controls/Male_Controls_TSSCoverage_PlasmaRNASeq_N
 output/PredictActiveGenes/Male_Controls/Male_Controls_TSSCoverage_small_PlasmaRNASeq_NMonly.txt:
 	./scripts/analyze_active_genes_by_TSS_coverage_small.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/Merged_Male_Controls_rmdup_trimmed.bam \
     -t 10 -egl ./ref/Plasma-RNASeq/Top1000_NMonly.txt -uegl ./ref/Plasma-RNASeq/Bottom1000_NMonly.txt -ws 1000 -we 1000 -ss 150 -se 50 \
-    > output/PredictActiveGenes/Male_Controls/Male_Controls_TSSCoverage_smallPlasmaRNASeq_NMonly.txt
+    > output/PredictActiveGenes/Male_Controls/Male_Controls_TSSCoverage_small_PlasmaRNASeq_NMonly.txt
 output/PredictActiveGenes/Male_Controls/Male_Controls_LowPass_Slope_PlasmaRNASeq_NMonly.txt:
 	./scripts/analyze_active_genes_by_low_pass_slope_coverage.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/Merged_Male_Controls_rmdup_trimmed.bam \
     -t 10 -egl ./ref/Plasma-RNASeq/Top1000_NMonly.txt -uegl ./ref/Plasma-RNASeq/Bottom1000_NMonly.txt -tmp ./intermediate/slope/ \
@@ -755,7 +762,7 @@ output/PredictActiveGenes/Female_Controls/Female_Controls_TSSCoverage_PlasmaRNAS
 output/PredictActiveGenes/Female_Controls/Female_Controls_TSSCoverage_small_PlasmaRNASeq_NMonly.txt:
 	./scripts/analyze_active_genes_by_TSS_coverage_small.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/Merged_Female_Controls_rmdup_trimmed.bam \
     -t 10 -egl ./ref/Plasma-RNASeq/Top1000_NMonly.txt -uegl ./ref/Plasma-RNASeq/Bottom1000_NMonly.txt -ws 1000 -we 1000 -ss 150 -se 50 \
-    > output/PredictActiveGenes/Female_Controls/Female_Controls_TSSCoverage_smallPlasmaRNASeq_NMonly.txt
+    > output/PredictActiveGenes/Female_Controls/Female_Controls_TSSCoverage_small_PlasmaRNASeq_NMonly.txt
 output/PredictActiveGenes/Female_Controls/Female_Controls_LowPass_Slope_PlasmaRNASeq_NMonly.txt:
 	./scripts/analyze_active_genes_by_low_pass_slope_coverage.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/Merged_Female_Controls_rmdup_trimmed.bam \
     -t 10 -egl ./ref/Plasma-RNASeq/Top1000_NMonly.txt -uegl ./ref/Plasma-RNASeq/Bottom1000_NMonly.txt -tmp ./intermediate/slope/ \
@@ -766,6 +773,25 @@ output/PredictActiveGenes/Female_Controls/Female_Controls_prediction_data.csv:
     -scov output/PredictActiveGenes/Female_Controls/Female_Controls_TSSCoverage_small_PlasmaRNASeq_NMonly.txt \
     -slope output/PredictActiveGenes/Female_Controls/Female_Controls_LowPass_Slope_PlasmaRNASeq_NMonly.txt
 
+#BreastCancer
+output/PredictActiveGenes/Breast/Breast_Cancer_TSSCoverage_PlasmaRNASeq_NMonly.txt:
+	./scripts/analyze_active_genes_by_TSS_coverage.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/BreastCancer_rmdup_trimmed.bam \
+    -t 10 -egl ./ref/Plasma-RNASeq/Top1000_NMonly.txt -uegl ./ref/Plasma-RNASeq/Bottom1000_NMonly.txt \
+    > output/PredictActiveGenes/Breast/Breast_Cancer_TSSCoverage_PlasmaRNASeq_NMonly.txt
+output/PredictActiveGenes/Breast/Breast_Cancer_TSSCoverage_small_PlasmaRNASeq_NMonly.txt:
+	./scripts/analyze_active_genes_by_TSS_coverage_small.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/BreastCancer_rmdup_trimmed.bam \
+    -t 10 -egl ./ref/Plasma-RNASeq/Top1000_NMonly.txt -uegl ./ref/Plasma-RNASeq/Bottom1000_NMonly.txt -ws 1000 -we 1000 -ss 150 -se 50 \
+    > output/PredictActiveGenes/Breast/Breast_Cancer_TSSCoverage_small_PlasmaRNASeq_NMonly.txt
+output/PredictActiveGenes/Breast/Breast_Cancer_LowPass_Slope_PlasmaRNASeq_NMonly.txt:
+	./scripts/analyze_active_genes_by_low_pass_slope_coverage.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/BreastCancer_rmdup_trimmed.bam \
+    -t 10 -egl ./ref/Plasma-RNASeq/Top1000_NMonly.txt -uegl ./ref/Plasma-RNASeq/Bottom1000_NMonly.txt -tmp ./intermediate/slope/ \
+    > output/PredictActiveGenes/Breast/Breast_Cancer_LowPass_Slope_PlasmaRNASeq_NMonly.txt
+output/PredictActiveGenes/Breast/Breast_Cancer_prediction_data.csv:
+	./scripts/combine_prediction_parameters.py -o output/PredictActiveGenes/Breast/Breast_Cancer_prediction_data.csv \
+    -bcov output/PredictActiveGenes/Breast/Breast_Cancer_TSSCoverage_PlasmaRNASeq_NMonly.txt \
+    -scov output/PredictActiveGenes/Breast/Breast_Cancer_TSSCoverage_small_PlasmaRNASeq_NMonly.txt \
+    -slope output/PredictActiveGenes/Breast/Breast_Cancer_LowPass_Slope_PlasmaRNASeq_NMonly.txt
+
 #CNV samples 
 output/PredictActiveGenes/CNVsamples/CNV_samples_TSSCoverage_PlasmaRNASeq_NMonly.txt:
 	./scripts/analyze_active_genes_by_TSS_coverage.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/CNV_samples_rmdup_trimmed.bam \
@@ -774,7 +800,7 @@ output/PredictActiveGenes/CNVsamples/CNV_samples_TSSCoverage_PlasmaRNASeq_NMonly
 output/PredictActiveGenes/CNVsamples/CNV_samples_TSSCoverage_small_PlasmaRNASeq_NMonly.txt:
 	./scripts/analyze_active_genes_by_TSS_coverage_small.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/CNV_samples_rmdup_trimmed.bam \
     -t 10 -egl ./ref/Plasma-RNASeq/Top1000_NMonly.txt -uegl ./ref/Plasma-RNASeq/Bottom1000_NMonly.txt -ws 1000 -we 1000 -ss 150 -se 50 \
-    > output/PredictActiveGenes/CNVsamples/CNV_samples_TSSCoverage_smallPlasmaRNASeq_NMonly.txt
+    > output/PredictActiveGenes/CNVsamples/CNV_samples_TSSCoverage_small_PlasmaRNASeq_NMonly.txt
 output/PredictActiveGenes/CNVsamples/CNV_samples_LowPass_Slope_PlasmaRNASeq_NMonly.txt:
 	./scripts/analyze_active_genes_by_low_pass_slope_coverage.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/CNV_samples_rmdup_trimmed.bam \
     -t 10 -egl ./ref/Plasma-RNASeq/Top1000_NMonly.txt -uegl ./ref/Plasma-RNASeq/Bottom1000_NMonly.txt -tmp ./intermediate/slope/ \
@@ -818,6 +844,34 @@ output/PredictActiveGenes/Dilution/MergedControls_TSSCoverage_PlasmaRNASeq_Top15
 	./scripts/analyze_active_genes_by_TSS_coverage.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam \
     -t 10 -egl ./ref/Plasma-RNASeq/Top15000_NMonly.txt -uegl ./ref/Plasma-RNASeq/Bottom50_NM.txt \
     > output/PredictActiveGenes/Dilution/MergedControls_TSSCoverage_PlasmaRNASeq_Top15000_NMonly.txt
+
+####################################################################################################################################
+#  Try to predict whether single genes are expressed by analysis of
+#    1) Mean Coverage +/- 1000bp around Transcription start site
+#    2) Slope of 400bp-smoothed coverage data in
+#       2.1) 1000bp before TSS and TSS (5' Slope, should be negative for expressed genes)
+#       2.2) TSS and 1000bp into gene (3' Slope, should be positive for expressed genes)
+#    3) Coverage in smaller region around TSS (-150;+50); corrected by mean coverage of +/-1000bp around TSS
+
+#Merged Controls
+output/PredictActiveGenes_All/Merged_Controls/MergedControls_TSSCoverage_PlasmaRNASeq_NMonly.txt:
+	./scripts/analyze_all_genes_by_TSS_coverage.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam \
+    -t 10 -gl ./ref/Plasma-RNASeq/AllGenes_NMonly.txt \
+    > output/PredictActiveGenes_All/Merged_Controls/MergedControls_TSSCoverage_PlasmaRNASeq_NMonly.txt
+output/PredictActiveGenes_All/Merged_Controls/MergedControls_TSSCoverage_small_PlasmaRNASeq_NMonly.txt:
+	./scripts/analyze_all_genes_by_TSS_coverage_small.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam \
+    -t 10 -gl ./ref/Plasma-RNASeq/AllGenes_NMonly.txt -ws 1000 -we 1000 -ss 150 -se 50 \
+    > output/PredictActiveGenes_All/Merged_Controls/MergedControls_TSSCoverage_small_PlasmaRNASeq_NMonly.txt
+output/PredictActiveGenes_All/Merged_Controls/MergedControls_LowPass_Slope_PlasmaRNASeq_NMonly.txt:
+	./scripts/analyze_all_genes_by_low_pass_slope_coverage.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam \
+    -t 10 -gl ./ref/Plasma-RNASeq/AllGenes_NMonly.txt -tmp ./intermediate/slope/ \
+    > output/PredictActiveGenes_All/Merged_Controls/MergedControls_LowPass_Slope_PlasmaRNASeq_NMonly.txt
+output/PredictActiveGenes_All/Merged_Controls/MergedControls_prediction_data.csv:
+	./scripts/combine_prediction_parameters.py -o output/PredictActiveGenes/Merged_Controls/MergedControls_prediction_data.csv \
+    -bcov output/PredictActiveGenes_All/Merged_Controls/MergedControls_TSSCoverage_PlasmaRNASeq_NMonly.txt \
+    -scov output/PredictActiveGenes_All/Merged_Controls/MergedControls_TSSCoverage_small_PlasmaRNASeq_NMonly.txt \
+    -slope output/PredictActiveGenes_All/Merged_Controls/MergedControls_LowPass_Slope_PlasmaRNASeq_NMonly.txt
+
 ####################################################################################################################################
 #
 # Check paired end plasma-samples for
@@ -844,12 +898,15 @@ output/alignments/Merged_Paired.insertsize.pdf:
 ####################################################################################################################################
 #
 # Create wig file for ordered array at Gaffney site: Hg19:chr12:34,484,733-34,560,733 
-output/Gaffney_nucleosome_array/MergedMaleControls_Gaffney_site.wig:
+output/Gaffney_nucleosome_array/MergedMaleControls_Gaffney_site.counts:
 	./scripts/single_region_wig_from_bam.py -chr chr12 -s 34484000 -e 34561000 -b output/trimmed_reads/Merged_Male_Controls_rmdup_trimmed.bam -w output/Gaffney_nucleosome_array/MergedMaleControls_Gaffney_site.wig
-output/Gaffney_nucleosome_array/MergedControls_Gaffney_site.wig:
+	./scripts/wiggleToCounts.py -w output/Gaffney_nucleosome_array/MergedMaleControls_Gaffney_site.wig -o output/Gaffney_nucleosome_array/MergedMaleControls_Gaffney_site.counts -s 34484733 -e 34560733
+output/Gaffney_nucleosome_array/MergedControls_Gaffney_site.counts:
 	./scripts/single_region_wig_from_bam.py -chr chr12 -s 34484000 -e 34561000 -b output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam -w output/Gaffney_nucleosome_array/MergedControls_Gaffney_site.wig
-output/Gaffney_nucleosome_array/MergedFemaleControls_Gaffney_site.wig:
+	./scripts/wiggleToCounts.py -w output/Gaffney_nucleosome_array/MergedControls_Gaffney_site.wig -o output/Gaffney_nucleosome_array/MergedControls_Gaffney_site.counts -s 34484733 -e 34560733
+output/Gaffney_nucleosome_array/MergedFemaleControls_Gaffney_site.counts:
 	./scripts/single_region_wig_from_bam.py -chr chr12 -s 34484000 -e 34561000 -b output/trimmed_reads/Merged_Female_Controls_rmdup_trimmed.bam -w output/Gaffney_nucleosome_array/MergedFemaleControls_Gaffney_site.wig
+	./scripts/wiggleToCounts.py -w output/Gaffney_nucleosome_array/MergedFemaleControls_Gaffney_site.wig -o output/Gaffney_nucleosome_array/MergedFemaleControls_Gaffney_site.counts -s 34484733 -e 34560733
 ####################################################################################################################################
 #
 # Try to infer genes having 5' nucleosome depleted region and calculate TSS profile of these genes
