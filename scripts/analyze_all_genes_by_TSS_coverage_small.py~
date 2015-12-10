@@ -147,7 +147,7 @@ except:
 target_genes = dict()
 try:
     GENELIST_H = open(args.gene_list,"r")
-    for item in EXPR_GENELIST_H.readlines():
+    for item in GENELIST_H.readlines():
         target_genes.append(item.rstrip())
     GENELIST_H.close()
 except:

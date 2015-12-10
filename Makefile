@@ -721,6 +721,10 @@ output/PredictActiveGenes/Merged_Controls/MergedControls_TSSCoverage_PlasmaRNASe
 	./scripts/analyze_active_genes_by_TSS_coverage.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam \
     -t 10 -egl ./ref/Plasma-RNASeq/Top1000_NMonly.txt -uegl ./ref/Plasma-RNASeq/Bottom1000_NMonly.txt \
     > output/PredictActiveGenes/Merged_Controls/MergedControls_TSSCoverage_PlasmaRNASeq_NMonly.txt
+output/PredictActiveGenes/Merged_Controls/MergedControls_TSSCoverage_PlasmaRNASeq_NMonly_normalized.txt:
+	./scripts/analyze_active_genes_by_TSS_coverage.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam \
+    -t 10 -egl ./ref/Plasma-RNASeq/Top1000_NMonly.txt -norm -uegl ./ref/Plasma-RNASeq/Bottom1000_NMonly.txt \
+    > output/PredictActiveGenes/Merged_Controls/MergedControls_TSSCoverage_PlasmaRNASeq_NMonly_normalized.txt
 output/PredictActiveGenes/Merged_Controls/MergedControls_TSSCoverage_small_PlasmaRNASeq_NMonly.txt:
 	./scripts/analyze_active_genes_by_TSS_coverage_small.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam \
     -t 10 -egl ./ref/Plasma-RNASeq/Top1000_NMonly.txt -uegl ./ref/Plasma-RNASeq/Bottom1000_NMonly.txt -ws 1000 -we 1000 -ss 150 -se 50 \
@@ -871,6 +875,10 @@ output/PredictActiveGenes_All/Merged_Controls/MergedControls_prediction_data.csv
     -bcov output/PredictActiveGenes_All/Merged_Controls/MergedControls_TSSCoverage_PlasmaRNASeq_NMonly.txt \
     -scov output/PredictActiveGenes_All/Merged_Controls/MergedControls_TSSCoverage_small_PlasmaRNASeq_NMonly.txt \
     -slope output/PredictActiveGenes_All/Merged_Controls/MergedControls_LowPass_Slope_PlasmaRNASeq_NMonly.txt
+output/PredictActiveGenes_All/Merged_Controls/MergedControls_TSSCoverage_PlasmaRNASeq_NMonly_normalized.txt:
+	./scripts/analyze_all_genes_by_TSS_coverage.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam \
+    -t 10 -gl ./ref/Plasma-RNASeq/AllGenes_NMonly.txt -norm \
+    > output/PredictActiveGenes_All/Merged_Controls/MergedControls_TSSCoverage_PlasmaRNASeq_NMonly_normalized.txt
 
 ####################################################################################################################################
 #

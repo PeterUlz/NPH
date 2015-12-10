@@ -40,16 +40,10 @@ def calcLocalMean(position, chrom, thread_number):
             if pos_found == i:
                 found = True
                 coverage = int(line.split()[2])
-                if forward:
-                    coverage_list[i-pos] = coverage
-                elif not forward:
-                    coverage_list[-(i-pos)] = coverage
+                coverage_list[i-pos] = coverage
                 continue
         if not found:
-            if forward:
-                coverage_list[i-pos] = 0
-            elif not forward:      
-                coverage_list[-(i-pos)] = 0
+            coverage_list[i-pos] = 0
 
     TMP_COVERAGE_BED_OUTPUT.close()
     call(["rm","intermediate/"+os.path.basename(args.bam_file)+str(thread_number)+"tmp_coverage_10000bpupstream.bed"])    
@@ -120,8 +114,13 @@ def thread_proc(q,thread_number,transcript_list):
         TMP_COVERAGE_BED_OUTPUT.close()
         call(["rm","intermediate/"+os.path.basename(args.bam_file)+str(thread_number)+"tmp_coverage.bed"])    
         mean,lower,upper = mean_confidence_interval(coverage_list.values())
-        control_region_mean = calcLocalMean(pos, chrom, thread_number)
-        coverage_dict[gene_name] = mean
+        if args.norm:
+            control_region_mean = calcLocalMean(pos, chrom, thread_number)
+            if control_region_mean == 0:
+                control_region_mean = 0.1
+            coverage_dict[gene_name] = float(mean) / float(control_region_mean)
+        else:
+            coverage_dict[gene_name] = mean
     
     sys.stderr.write("\rThread "+str(thread_number)+"\t finished\n")
     sys.stderr.flush() 
@@ -144,7 +143,8 @@ parser.add_argument('-egl','--expr-gene-list', dest='expr_gene_list',
                    help='List of gene names believed to be expressed',required=True)
 parser.add_argument('-uegl','--unexpr-gene-list', dest='unexpr_gene_list',
                    help='List of gene names believed to be unexpressed',required=True)
-
+parser.add_argument('-norm','--normalize', dest='norm',
+                   help='Normalize by local coverage at 10000bp upstream',action="store_true")
 
 args = parser.parse_args()
 sys.stderr.write("Bam file: "+args.bam_file+"\n")

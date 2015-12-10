@@ -144,7 +144,7 @@ try:
 except:
     print "Fail to open files specified"
     sys.exit(1)
-target_genes = dict()
+target_genes = list()
 try:
     GENELIST_H = open(args.gene_list,"r")
     for item in GENELIST_H.readlines():
