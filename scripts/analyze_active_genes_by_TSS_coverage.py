@@ -12,6 +12,7 @@ import os.path
 import multiprocessing
 
 #Update 9.12. correct mean coverage by analyzing 2000bp in 10000bp upstream of gene
+#Update 14.12. correct mean coverage by analyzing 100.000bp from 10000bp to 110000 upstream of gene
 
 # Calculate mean and confidence intervals ###################################################################################
 def mean_confidence_interval(data, confidence=0.95):
@@ -24,31 +25,46 @@ def mean_confidence_interval(data, confidence=0.95):
 
 # Calculate mean coverage in 10000bp upstream sequence ###################################################################################
 def calcLocalMean(position, chrom, thread_number):
-    coverage_list=dict()
-    pos = position + 10000
-    TMP_COVERAGE_BED = open("intermediate/"+os.path.basename(args.bam_file)+str(thread_number)+"tmp_coverage_10000bpupstream.bed","w")
-    call(["samtools","depth","-r",chrom+":"+str(pos-args.start)+"-"+str(pos+args.end),args.bam_file],stdout=TMP_COVERAGE_BED)
+    coverage_list=list()
+    #pos = position + 100000
+    #step1 get coverage values of TSS-2000 to TSS -1000
+    start1 = position - 3000
+    end1 = position - 1000
+    TMP_COVERAGE_BED = open("intermediate/"+os.path.basename(args.bam_file)+str(thread_number)+"tmp_coverage1_10000bpupstream.bed","w")
+    call(["samtools","depth","-r",chrom+":"+str(start1)+"-"+str(end1),args.bam_file],stdout=TMP_COVERAGE_BED)
     TMP_COVERAGE_BED.close()
-    
-    TMP_COVERAGE_BED_OUTPUT = open("intermediate/"+os.path.basename(args.bam_file)+str(thread_number)+"tmp_coverage_10000bpupstream.bed","r")
+    TMP_COVERAGE_BED_OUTPUT = open("intermediate/"+os.path.basename(args.bam_file)+str(thread_number)+"tmp_coverage1_10000bpupstream.bed","r")
     content = TMP_COVERAGE_BED_OUTPUT.readlines()
-    for i in range(pos-args.start,pos+args.start):
-        found = False
-        for line in content:
-            chrom_found = line.split()[0]
-            pos_found = int(line.split()[1])
-            if pos_found == i:
-                found = True
-                coverage = int(line.split()[2])
-                coverage_list[i-pos] = coverage
-                continue
-        if not found:
-            coverage_list[i-pos] = 0
-
+    for line in content:
+        chrom_found = line.split()[0]
+        pos_found = int(line.split()[1])
+        coverage = int(line.split()[2])
+        coverage_list.append(coverage)
+    call(["rm","intermediate/"+os.path.basename(args.bam_file)+str(thread_number)+"tmp_coverage1_10000bpupstream.bed"])    
     TMP_COVERAGE_BED_OUTPUT.close()
-    call(["rm","intermediate/"+os.path.basename(args.bam_file)+str(thread_number)+"tmp_coverage_10000bpupstream.bed"])    
-    mean,lower,upper = mean_confidence_interval(coverage_list.values())
+
+    #step2 get coverage values of TSS+1000 to TSS+2000
+    start2 = position + 1000
+    end2 = position + 3000
+    TMP_COVERAGE_BED = open("intermediate/"+os.path.basename(args.bam_file)+str(thread_number)+"tmp_coverage2_10000bpupstream.bed","w")
+    call(["samtools","depth","-r",chrom+":"+str(start2)+"-"+str(end2),args.bam_file],stdout=TMP_COVERAGE_BED)
+    TMP_COVERAGE_BED.close()
+    TMP_COVERAGE_BED_OUTPUT = open("intermediate/"+os.path.basename(args.bam_file)+str(thread_number)+"tmp_coverage2_10000bpupstream.bed","r")
+    content = TMP_COVERAGE_BED_OUTPUT.readlines()
+    for line in content:
+        chrom_found = line.split()[0]
+        pos_found = int(line.split()[1])
+        coverage = int(line.split()[2])
+        coverage_list.append(coverage)
+    call(["rm","intermediate/"+os.path.basename(args.bam_file)+str(thread_number)+"tmp_coverage2_10000bpupstream.bed"])    
+    TMP_COVERAGE_BED_OUTPUT.close()
+    
+    if len(coverage_list) == 0:
+        mean = 0.1
+    else:
+        mean,lower,upper = mean_confidence_interval(coverage_list)
     return mean
+
 
 # Run this for each thread ###################################################################################
 def thread_proc(q,thread_number,transcript_list):
@@ -87,11 +103,11 @@ def thread_proc(q,thread_number,transcript_list):
             continue
         tss_visited.append(chrom+"_"+str(pos))
 
-        TMP_COVERAGE_BED = open("intermediate/"+os.path.basename(args.bam_file)+str(thread_number)+"tmp_coverage.bed","w")
+        TMP_COVERAGE_BED = open(args.temp_dir+os.path.basename(args.bam_file)+str(thread_number)+"tmp_coverage.bed","w")
         call(["samtools","depth","-r",chrom+":"+str(pos-args.start)+"-"+str(pos+args.end),args.bam_file],stdout=TMP_COVERAGE_BED)
         TMP_COVERAGE_BED.close()
     
-        TMP_COVERAGE_BED_OUTPUT = open("intermediate/"+os.path.basename(args.bam_file)+str(thread_number)+"tmp_coverage.bed","r")
+        TMP_COVERAGE_BED_OUTPUT = open(args.temp_dir+os.path.basename(args.bam_file)+str(thread_number)+"tmp_coverage.bed","r")
         content = TMP_COVERAGE_BED_OUTPUT.readlines()
         for i in range(pos-args.start,pos+args.start):
             found = False
@@ -112,7 +128,7 @@ def thread_proc(q,thread_number,transcript_list):
                 elif not forward:      
                     coverage_list[-(i-pos)] = 0
         TMP_COVERAGE_BED_OUTPUT.close()
-        call(["rm","intermediate/"+os.path.basename(args.bam_file)+str(thread_number)+"tmp_coverage.bed"])    
+        call(["rm",args.temp_dir+os.path.basename(args.bam_file)+str(thread_number)+"tmp_coverage.bed"])    
         mean,lower,upper = mean_confidence_interval(coverage_list.values())
         if args.norm:
             control_region_mean = calcLocalMean(pos, chrom, thread_number)
@@ -144,9 +160,14 @@ parser.add_argument('-egl','--expr-gene-list', dest='expr_gene_list',
 parser.add_argument('-uegl','--unexpr-gene-list', dest='unexpr_gene_list',
                    help='List of gene names believed to be unexpressed',required=True)
 parser.add_argument('-norm','--normalize', dest='norm',
-                   help='Normalize by local coverage at 10000bp upstream',action="store_true")
+                   help='Normalize by local coverage at 100.000bp upstream',action="store_true")
+parser.add_argument('-tmp','--temp-dir', dest='temp_dir',
+                   help='Temporary Directory',default="./intermediate/")
+
 
 args = parser.parse_args()
+if args.temp_dir[-1:] != "/":
+    args.temp_dir = args.temp_dir+"/"
 sys.stderr.write("Bam file: "+args.bam_file+"\n")
 sys.stderr.write("RefGene file: "+args.refgene_file+"\n")
 sys.stderr.write("Expressed Genes: "+str(args.expr_gene_list)+"\n")
