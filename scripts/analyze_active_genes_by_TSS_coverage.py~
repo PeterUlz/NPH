@@ -59,7 +59,10 @@ def calcLocalMean(position, chrom, thread_number):
     call(["rm","intermediate/"+os.path.basename(args.bam_file)+str(thread_number)+"tmp_coverage2_10000bpupstream.bed"])    
     TMP_COVERAGE_BED_OUTPUT.close()
     
-    mean,lower,upper = mean_confidence_interval(coverage_list)
+    if len(coverage_list) == 0:
+        mean = 0.1
+    else:
+        mean,lower,upper = mean_confidence_interval(coverage_list)
     return mean
 
 

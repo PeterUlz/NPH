@@ -298,6 +298,7 @@ output/trimmed_reads/MYC_rmdup_trimmed.bam:
 #   -) Plasma RNASeq Top50 (only Genes with NM accession in RefSeq)
 #   -) Plasma RNASeq Top100 (only Genes with NM accession in RefSeq)
 #   -) Plasma RNASeq Top500 (only Genes with NM accession in RefSeq)
+#   -) Plasma RNASeq FPKM-based (only Genes with NM accession in RefSeq)
 #   
 
 #3.1 All genes
@@ -443,6 +444,59 @@ output/TSS_coverage/PlasmaRNASeq/Merged_Female_Controls_Plasma_Top500_tss.txt: .
 	./scripts/analyze_TSS_coverage.py -gl ref/Plasma-RNASeq/Top500_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Female_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/PlasmaRNASeq/Merged_Female_Controls_Plasma_Top500_tss.txt
 	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/Merged_Female_Controls_Plasma_Top500_tss.txt
 	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/PlasmaRNASeq/Merged_Female_Controls_Plasma_Top500_tss.txt
+
+#FPKM over 8
+output/TSS_coverage/FPKM_Plasma_RNASeq/Merged_Male_Controls_FPKM_over8_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -gl ref/Plasma-RNASeq/FPKM/FPKM_over8.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Male_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/FPKM_Plasma_RNASeq/Merged_Male_Controls_FPKM_over8_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/FPKM_Plasma_RNASeq/Merged_Male_Controls_FPKM_over8_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/FPKM_Plasma_RNASeq/Merged_Male_Controls_FPKM_over8_tss.txt
+output/TSS_coverage/FPKM_Plasma_RNASeq/Merged_Female_Controls_FPKM_over8_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -gl ref/Plasma-RNASeq/FPKM/FPKM_over8.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Female_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/FPKM_Plasma_RNASeq/Merged_Female_Controls_FPKM_over8_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/FPKM_Plasma_RNASeq/Merged_Female_Controls_FPKM_over8_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/FPKM_Plasma_RNASeq/Merged_Female_Controls_FPKM_over8_tss.txt
+output/TSS_coverage/FPKM_Plasma_RNASeq/MergedControls_Plasma_FPKM_over8_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -gl ref/Plasma-RNASeq/FPKM/FPKM_over8.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/FPKM_Plasma_RNASeq/MergedControls_Plasma_FPKM_over8_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/FPKM_Plasma_RNASeq/MergedControls_Plasma_FPKM_over8_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/FPKM_Plasma_RNASeq/MergedControls_Plasma_FPKM_over8_tss.txt
+#FPKM between 1 and 8
+output/TSS_coverage/FPKM_Plasma_RNASeq/Merged_Male_Controls_FPKM_between1_8_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -gl ref/Plasma-RNASeq/FPKM/FPKM_1_to_8.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Male_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/FPKM_Plasma_RNASeq/Merged_Male_Controls_FPKM_between1_8_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/FPKM_Plasma_RNASeq/Merged_Male_Controls_FPKM_between1_8_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/FPKM_Plasma_RNASeq/Merged_Male_Controls_FPKM_between1_8_tss.txt
+output/TSS_coverage/FPKM_Plasma_RNASeq/Merged_Female_Controls_FPKM_between1_8_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -gl ref/Plasma-RNASeq/FPKM/FPKM_1_to_8.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Female_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/FPKM_Plasma_RNASeq/Merged_Female_Controls_FPKM_between1_8_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/FPKM_Plasma_RNASeq/Merged_Female_Controls_FPKM_between1_8_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/FPKM_Plasma_RNASeq/Merged_Female_Controls_FPKM_between1_8_tss.txt
+output/TSS_coverage/FPKM_Plasma_RNASeq/MergedControls_Plasma_FPKM_between1_8_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -gl ref/Plasma-RNASeq/FPKM/FPKM_1_to_8.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/FPKM_Plasma_RNASeq/MergedControls_Plasma_FPKM_between1_8_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/FPKM_Plasma_RNASeq/MergedControls_Plasma_FPKM_between1_8_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/FPKM_Plasma_RNASeq/MergedControls_Plasma_FPKM_between1_8_tss.txt
+#FPKM between 0.1 and 1
+output/TSS_coverage/FPKM_Plasma_RNASeq/Merged_Male_Controls_FPKM_between0.1_1_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -gl ref/Plasma-RNASeq/FPKM/FPKM_0.1_to_1.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Male_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/FPKM_Plasma_RNASeq/Merged_Male_Controls_FPKM_between0.1_1_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/FPKM_Plasma_RNASeq/Merged_Male_Controls_FPKM_between0.1_1_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/FPKM_Plasma_RNASeq/Merged_Male_Controls_FPKM_between0.1_1_tss.txt
+output/TSS_coverage/FPKM_Plasma_RNASeq/Merged_Female_Controls_FPKM_between0.1_1_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -gl ref/Plasma-RNASeq/FPKM/FPKM_0.1_to_1.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Female_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/FPKM_Plasma_RNASeq/Merged_Female_Controls_FPKM_between0.1_1_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/FPKM_Plasma_RNASeq/Merged_Female_Controls_FPKM_between0.1_1_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/FPKM_Plasma_RNASeq/Merged_Female_Controls_FPKM_between0.1_1_tss.txt
+output/TSS_coverage/FPKM_Plasma_RNASeq/MergedControls_Plasma_FPKM_between0.1_1_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -gl ref/Plasma-RNASeq/FPKM/FPKM_0.1_to_1.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/FPKM_Plasma_RNASeq/MergedControls_Plasma_FPKM_between0.1_1_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/FPKM_Plasma_RNASeq/MergedControls_Plasma_FPKM_between0.1_1_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/FPKM_Plasma_RNASeq/MergedControls_Plasma_FPKM_between0.1_1_tss.txt
+#FPKM lower 0.1
+output/TSS_coverage/FPKM_Plasma_RNASeq/Merged_Male_Controls_FPKM_under0.1_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -gl ref/Plasma-RNASeq/FPKM/FPKM_under0.1.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Male_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/FPKM_Plasma_RNASeq/Merged_Male_Controls_FPKM_under0.1_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/FPKM_Plasma_RNASeq/Merged_Male_Controls_FPKM_under0.1_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/FPKM_Plasma_RNASeq/Merged_Male_Controls_FPKM_under0.1_tss.txt
+output/TSS_coverage/FPKM_Plasma_RNASeq/Merged_Female_Controls_FPKM_under0.1_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -gl ref/Plasma-RNASeq/FPKM/FPKM_under0.1.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Female_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/FPKM_Plasma_RNASeq/Merged_Female_Controls_FPKM_under0.1_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/FPKM_Plasma_RNASeq/Merged_Female_Controls_FPKM_under0.1_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/FPKM_Plasma_RNASeq/Merged_Female_Controls_FPKM_under0.1_tss.txt
+output/TSS_coverage/FPKM_Plasma_RNASeq/MergedControls_Plasma_FPKM_under0.1_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -gl ref/Plasma-RNASeq/FPKM/FPKM_under0.1.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/FPKM_Plasma_RNASeq/MergedControls_Plasma_FPKM_under0.1_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/FPKM_Plasma_RNASeq/MergedControls_Plasma_FPKM_under0.1_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/FPKM_Plasma_RNASeq/MergedControls_Plasma_FPKM_under0.1_tss.txt
 
 ####################################################################################################################################
 # 4
@@ -709,6 +763,144 @@ output/TSS_coverage/Prostate_specific/Prostate_Cancer_Prostate_Specific_tss.txt:
 	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Prostate_specific/Prostate_Cancer_Prostate_Specific_tss.txt
 
 ####################################################################################################################################
+#
+# Calculate normalized TSS profiles
+# 	
+output/TSS_coverage/Normalized/Merged_Male_Controls_Top1000_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -gl ref/Plasma-RNASeq/Top1000_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Male_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/Normalized/Merged_Male_Controls_Top1000_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Normalized/Merged_Male_Controls_Top1000_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Normalized/Merged_Male_Controls_Top1000_tss.txt
+output/TSS_coverage/Normalized/Merged_Female_Controls_Top1000_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -gl ref/Plasma-RNASeq/Top1000_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Female_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/Normalized/Merged_Female_Controls_Top1000_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Normalized/Merged_Female_Controls_Top1000_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Normalized/Merged_Female_Controls_Top1000_tss.txt
+output/TSS_coverage/Normalized/BreastCancer_Top1000_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -gl ref/Plasma-RNASeq/Top1000_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/BreastCancer_rmdup_trimmed.bam -t 10 > output/TSS_coverage/Normalized/BreastCancer_Top1000_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Normalized/BreastCancer_Top1000_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Normalized/BreastCancer_Top1000_tss.txt
+output/TSS_coverage/Normalized/ProstateCancer_Top1000_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -gl ref/Plasma-RNASeq/Top1000_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/ProstateCancer_rmdup_trimmed.bam -t 10 > output/TSS_coverage/Normalized/ProstateCancer_Top1000_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Normalized/ProstateCancer_Top1000_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Normalized/ProstateCancer_Top1000_tss.txt
+output/TSS_coverage/Normalized/CNV_samples_Top1000_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -gl ref/Plasma-RNASeq/Top1000_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/CNV_samples_rmdup_trimmed.bam -t 6 > output/TSS_coverage/Normalized/CNV_samples_Top1000_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Normalized/CNV_samples_Top1000_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Normalized/CNV_samples_Top1000_tss.txt
+output/TSS_coverage/Normalized/Biphasic_Breast_Top1000_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -gl ref/Plasma-RNASeq/Top1000_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/BreastCancer_rmdup_trimmed.bam -t 10 > output/TSS_coverage/Normalized/Biphasic_Breast_Top1000_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Normalized/Biphasic_Breast_Top1000_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Normalized/Biphasic_Breast_Top1000_tss.txt
+output/TSS_coverage/Normalized/ERBB2_Top1000_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -gl ref/Plasma-RNASeq/Top1000.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/ERBB2_rmdup_trimmed.bam -t 10 > output/TSS_coverage/Normalized/ERBB2_Top1000_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Normalized/ERBB2_Top1000_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Normalized/ERBB2_Top1000_tss.txt
+output/TSS_coverage/Normalized/CCND1_Top1000_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -gl ref/Plasma-RNASeq/Top1000_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/CCND1_rmdup_trimmed.bam -t 10 > output/TSS_coverage/Normalized/CCND1_Top1000_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Normalized/CCND1_Top1000_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Normalized/CCND1_Top1000_tss.txt
+output/TSS_coverage/Normalized/MYC_Top1000_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -gl ref/Plasma-RNASeq/Top1000_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/MYC_rmdup_trimmed.bam -t 10 > output/TSS_coverage/Normalized/MYC_Top1000_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Normalized/MYC_Top1000_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Normalized/MYC_Top1000_tss.txt
+output/TSS_coverage/Normalized/MergedControls_Plasma_Top1000_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -gl ref/Plasma-RNASeq/Top1000_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/Normalized/MergedControls_Plasma_Top1000_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Normalized/MergedControls_Plasma_Top1000_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Normalized/MergedControls_Plasma_Top1000_tss.txt
+output/TSS_coverage/Normalized/MergedControls_Plasma_Bottom1000_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -gl ref/Plasma-RNASeq/Bottom1000_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/Normalized/MergedControls_Plasma_Bottom1000_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Normalized/MergedControls_Plasma_Bottom1000_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Normalized/MergedControls_Plasma_Bottom1000_tss.txt
+output/TSS_coverage/Normalized/MergedControls_Plasma_Top100_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -gl ref/Plasma-RNASeq/Top100_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/Normalized/MergedControls_Plasma_Top100_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Normalized/MergedControls_Plasma_Top100_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Normalized/MergedControls_Plasma_Top100_tss.txt
+output/TSS_coverage/Normalized/Merged_Male_Controls_Plasma_Bottom1000_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -gl ref/Plasma-RNASeq/Bottom1000_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Male_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/Normalized/Merged_Male_Controls_Plasma_Bottom1000_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Normalized/Merged_Male_Controls_Plasma_Bottom1000_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Normalized/Merged_Male_Controls_Plasma_Bottom1000_tss.txt
+output/TSS_coverage/Normalized/Merged_Female_Controls_Plasma_Bottom1000_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -gl ref/Plasma-RNASeq/Bottom1000_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Female_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/Normalized/Merged_Female_Controls_Plasma_Bottom1000_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Normalized/Merged_Female_Controls_Plasma_Bottom1000_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Normalized/Merged_Female_Controls_Plasma_Bottom1000_tss.txt
+
+#Dilution series
+output/TSS_coverage/Normalized/Dilution/MergedControls_Plasma_Top1-20_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -gl ref/Plasma-RNASeq/Dilution/Top1-20_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/Normalized/Dilution/MergedControls_Plasma_Top1-20_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Normalized/Dilution/MergedControls_Plasma_Top1-20_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Normalized/Dilution/MergedControls_Plasma_Top1-20_tss.txt
+output/TSS_coverage/Normalized/Dilution/MergedControls_Plasma_Top21-50_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -gl ref/Plasma-RNASeq/Dilution/Top21-50_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/Normalized/Dilution/MergedControls_Plasma_Top21-50_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Normalized/Dilution/MergedControls_Plasma_Top21-50_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Normalized/Dilution/MergedControls_Plasma_Top21-50_tss.txt
+output/TSS_coverage/Normalized/Dilution/MergedControls_Plasma_Top51-100_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -gl ref/Plasma-RNASeq/Dilution/Top51-100_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/Normalized/Dilution/MergedControls_Plasma_Top51-100_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Normalized/Dilution/MergedControls_Plasma_Top51-100_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Normalized/Dilution/MergedControls_Plasma_Top51-100_tss.txt
+output/TSS_coverage/Normalized/Dilution/MergedControls_Plasma_Top101-500_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -gl ref/Plasma-RNASeq/Dilution/Top101-500_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/Normalized/Dilution/MergedControls_Plasma_Top101-500_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Normalized/Dilution/MergedControls_Plasma_Top101-500_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Normalized/Dilution/MergedControls_Plasma_Top101-500_tss.txt
+output/TSS_coverage/Normalized/Dilution/MergedControls_Plasma_Top501-1000_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -gl ref/Plasma-RNASeq/Dilution/Top501-1000_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/Normalized/Dilution/MergedControls_Plasma_Top501-1000_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Normalized/Dilution/MergedControls_Plasma_Top501-1000_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Normalized/Dilution/MergedControls_Plasma_Top501-1000_tss.txt
+output/TSS_coverage/Normalized/Dilution/MergedControls_Plasma_Top1001-5000_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -gl ref/Plasma-RNASeq/Dilution/Top1001-5000_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/Normalized/Dilution/MergedControls_Plasma_Top1001-5000_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Normalized/Dilution/MergedControls_Plasma_Top1001-5000_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Normalized/Dilution/MergedControls_Plasma_Top1001-5000_tss.txt
+output/TSS_coverage/Normalized/Dilution/MergedControls_Plasma_Top5001-10000_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -gl ref/Plasma-RNASeq/Dilution/Top5001-10000_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/Normalized/Dilution/MergedControls_Plasma_Top5001-10000_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Normalized/Dilution/MergedControls_Plasma_Top5001-10000_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Normalized/Dilution/MergedControls_Plasma_Top5001-10000_tss.txt
+output/TSS_coverage/Normalized/Dilution/MergedControls_Plasma_Top10001-15000_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -gl ref/Plasma-RNASeq/Dilution/Top10001-15000_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/Normalized/Dilution/MergedControls_Plasma_Top10001-15000_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Normalized/Dilution/MergedControls_Plasma_Top10001-15000_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Normalized/Dilution/MergedControls_Plasma_Top10001-15000_tss.txt
+output/TSS_coverage/Normalized/Dilution/MergedControls_Plasma_Top15001-17840_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -gl ref/Plasma-RNASeq/Dilution/Top15001-17840_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/Normalized/Dilution/MergedControls_Plasma_Top15001-17840_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Normalized/Dilution/MergedControls_Plasma_Top15001-17840_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Normalized/Dilution/MergedControls_Plasma_Top15001-17840_tss.txt
+
+#Household Genes
+output/TSS_coverage/Household_vs_Brain_Genes/MergedControls_Household_GTEx_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -gl ref/GTEx/Household_genes_FPKMover5_in_min50tissues.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/Household_vs_Brain_Genes/MergedControls_Household_GTEx_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Household_vs_Brain_Genes/MergedControls_Household_GTEx_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Household_vs_Brain_Genes/MergedControls_Household_GTEx_tss.txt
+output/TSS_coverage/Household_vs_Brain_Genes/MergedControls_Brain_GTEx_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -gl ref/GTEx/NotExpressedInBloodButBrainTissueFPKMover5AndOtherTissuelower1FPKM.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/Household_vs_Brain_Genes/MergedControls_Brain_GTEx_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Household_vs_Brain_Genes/MergedControls_Brain_GTEx_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Household_vs_Brain_Genes/MergedControls_Brain_GTEx_tss.txt
+output/TSS_coverage/Household_vs_Brain_Genes/MergedControls_Household_FANTOM5_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -gl ref/FANTOM5/Household_genes_FPKMover5_in_min52tissues.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/Household_vs_Brain_Genes/MergedControls_Household_FANTOM5_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Household_vs_Brain_Genes/MergedControls_Household_FANTOM5_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Household_vs_Brain_Genes/MergedControls_Household_FANTOM5_tss.txt
+output/TSS_coverage/Household_vs_Brain_Genes/MergedControls_Brain_FANTOM5_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -tmp ./intermediate/Tssnormalized -gl ref/FANTOM5/Fantom5_brain_over5FPKM_Nonbrain_lower1FPKM.tsv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam -t 5 > output/TSS_coverage/Household_vs_Brain_Genes/MergedControls_Brain_FANTOM5_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Household_vs_Brain_Genes/MergedControls_Brain_FANTOM5_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Household_vs_Brain_Genes/MergedControls_Brain_FANTOM5_tss.txt
+output/TSS_coverage/Household_vs_Brain_Genes/MergedControls_FANTOM5_unexpressed_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -tmp ./intermediate/Tssnormalized -gl ref/FANTOM5/Fantom5_all_lower0.1.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/Household_vs_Brain_Genes/MergedControls_FANTOM5_unexpressed_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Household_vs_Brain_Genes/MergedControls_FANTOM5_unexpressed_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Household_vs_Brain_Genes/MergedControls_FANTOM5_unexpressed_tss.txt
+output/TSS_coverage/Household_vs_Brain_Genes/MergedControls_Housekeeping_Eisenberg_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -gl ref/Housekeeping/HK_gene_names.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/Household_vs_Brain_Genes/MergedControls_Housekeeping_Eisenberg_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Household_vs_Brain_Genes/MergedControls_Housekeeping_Eisenberg_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Household_vs_Brain_Genes/MergedControls_Housekeeping_Eisenberg_tss.txt
+
+####################################################################################################################################
+#
+# Calculate normalized TES profiles
+# 	
+output/TES_coverage/Merged_Male_Controls_Top1000_tes.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TES_coverage.py -norm -gl ref/Plasma-RNASeq/Top1000_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Male_Controls_rmdup_trimmed.bam -t 10 > output/TES_coverage/Merged_Male_Controls_Top1000_tes.txt
+	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/Merged_Male_Controls_Top1000_tes.txt
+	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/Merged_Male_Controls_Top1000_tes.txt
+output/TES_coverage/MergedControls_Housekeeping_Eisenberg_tes.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TES_coverage.py -norm -gl ref/Housekeeping/HK_gene_names.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam -t 10 > output/TES_coverage/MergedControls_Housekeeping_Eisenberg_tes.txt
+	cat scripts/create_TES_plot_extended.R | R --slave --args output/TES_coverage/MergedControls_Housekeeping_Eisenberg_tes.txt
+	cat scripts/create_TES_plot.R | R --slave --args output/TES_coverage/MergedControls_Housekeeping_Eisenberg_tes.txt
+
+####################################################################################################################################
 #  Try to predict whether single genes are expressed by analysis of Top1000 and Bottom1000 genes at four parameters:
 #    1) Mean Coverage +/- 1000bp around Transcription start site
 #    2) Slope of 400bp-smoothed coverage data in
@@ -721,10 +913,18 @@ output/PredictActiveGenes/Merged_Controls/MergedControls_TSSCoverage_PlasmaRNASe
 	./scripts/analyze_active_genes_by_TSS_coverage.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam \
     -t 10 -egl ./ref/Plasma-RNASeq/Top1000_NMonly.txt -uegl ./ref/Plasma-RNASeq/Bottom1000_NMonly.txt \
     > output/PredictActiveGenes/Merged_Controls/MergedControls_TSSCoverage_PlasmaRNASeq_NMonly.txt
+output/PredictActiveGenes/Merged_Controls/MergedControls_TSSCoverage_PlasmaRNASeq_NMonly_Top20.txt:
+	./scripts/analyze_active_genes_by_TSS_coverage.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam \
+    -t 10 -egl ./ref/Plasma-RNASeq/Top20_NMonly.txt -uegl ./ref/Plasma-RNASeq/Bottom50_NM.txt \
+    > output/PredictActiveGenes/Merged_Controls/MergedControls_TSSCoverage_PlasmaRNASeq_NMonly_Top20.txt
 output/PredictActiveGenes/Merged_Controls/MergedControls_TSSCoverage_PlasmaRNASeq_NMonly_normalized.txt:
 	./scripts/analyze_active_genes_by_TSS_coverage.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam \
     -t 6 -egl ./ref/Plasma-RNASeq/Top1000_NMonly.txt -tmp ./intermediate/normalizedTSS/ -norm -uegl ./ref/Plasma-RNASeq/Bottom1000_NMonly.txt \
     > output/PredictActiveGenes/Merged_Controls/MergedControls_TSSCoverage_PlasmaRNASeq_NMonly_normalized.txt
+output/PredictActiveGenes/Merged_Controls/MergedControls_TSSCoverage_PlasmaRNASeq_NMonly_normalized_Top20.txt:
+	./scripts/analyze_active_genes_by_TSS_coverage.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam \
+    -t 6 -egl ./ref/Plasma-RNASeq/Top20_NMonly.txt -tmp ./intermediate/normalizedTSS/ -norm -uegl ./ref/Plasma-RNASeq/Bottom50_NM.txt \
+    > output/PredictActiveGenes/Merged_Controls/MergedControls_TSSCoverage_PlasmaRNASeq_NMonly_normalized_Top20.txt
 output/PredictActiveGenes/Merged_Controls/MergedControls_TSSCoverage_small_PlasmaRNASeq_NMonly.txt:
 	./scripts/analyze_active_genes_by_TSS_coverage_small.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam \
     -t 10 -egl ./ref/Plasma-RNASeq/Top1000_NMonly.txt -uegl ./ref/Plasma-RNASeq/Bottom1000_NMonly.txt -ws 1000 -we 1000 -ss 150 -se 50 \
@@ -849,6 +1049,8 @@ output/PredictActiveGenes/Dilution/MergedControls_TSSCoverage_PlasmaRNASeq_Top15
 	./scripts/analyze_active_genes_by_TSS_coverage.py -rg ./ref/refSeq_extended_names_strand.bed -b ./output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam \
     -t 10 -egl ./ref/Plasma-RNASeq/Top15000_NMonly.txt -uegl ./ref/Plasma-RNASeq/Bottom50_NM.txt \
     > output/PredictActiveGenes/Dilution/MergedControls_TSSCoverage_PlasmaRNASeq_Top15000_NMonly.txt
+
+
 
 ####################################################################################################################################
 #  Try to predict whether single genes are expressed by analysis of

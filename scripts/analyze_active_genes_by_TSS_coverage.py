@@ -28,8 +28,8 @@ def calcLocalMean(position, chrom, thread_number):
     coverage_list=list()
     #pos = position + 100000
     #step1 get coverage values of TSS-2000 to TSS -1000
-    start1 = position - 3000
-    end1 = position - 1000
+    start1 = position - args.localstart
+    end1 = position - args.localend
     TMP_COVERAGE_BED = open("intermediate/"+os.path.basename(args.bam_file)+str(thread_number)+"tmp_coverage1_10000bpupstream.bed","w")
     call(["samtools","depth","-r",chrom+":"+str(start1)+"-"+str(end1),args.bam_file],stdout=TMP_COVERAGE_BED)
     TMP_COVERAGE_BED.close()
@@ -44,8 +44,8 @@ def calcLocalMean(position, chrom, thread_number):
     TMP_COVERAGE_BED_OUTPUT.close()
 
     #step2 get coverage values of TSS+1000 to TSS+2000
-    start2 = position + 1000
-    end2 = position + 3000
+    start2 = position + args.localend
+    end2 = position + args.localstart
     TMP_COVERAGE_BED = open("intermediate/"+os.path.basename(args.bam_file)+str(thread_number)+"tmp_coverage2_10000bpupstream.bed","w")
     call(["samtools","depth","-r",chrom+":"+str(start2)+"-"+str(end2),args.bam_file],stdout=TMP_COVERAGE_BED)
     TMP_COVERAGE_BED.close()
@@ -161,6 +161,10 @@ parser.add_argument('-uegl','--unexpr-gene-list', dest='unexpr_gene_list',
                    help='List of gene names believed to be unexpressed',required=True)
 parser.add_argument('-norm','--normalize', dest='norm',
                    help='Normalize by local coverage at 100.000bp upstream',action="store_true")
+parser.add_argument('-localstart','--localstart', dest='localstart',
+                   help='Start to analyze local coverage here',default=3000,type=int)
+parser.add_argument('-localend','--localend', dest='localend',
+                   help='Start to analyze local coverage here',default=1000,type=int)
 parser.add_argument('-tmp','--temp-dir', dest='temp_dir',
                    help='Temporary Directory',default="./intermediate/")
 
