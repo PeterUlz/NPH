@@ -142,6 +142,43 @@ sensitivity_top1000<-function(data,output_dir){
     write.table(t(c("Sensitivity",sensitivity)), file=paste(output_dir,"/Statistics_Top1000.txt",sep=""), quote=FALSE, row.names=FALSE, col.names=FALSE, sep="\t",append=TRUE)
     write.table(t(c("Accuracy",accuracy)), file=paste(output_dir,"/Statistics_Top1000.txt",sep=""), quote=FALSE, row.names=FALSE, col.names=FALSE, sep="\t",append=TRUE)
 }
+#############################################################################################################################################################################
+sensitivity_housekeeping<-function(data,output_dir){
+    #Check in more detail whether Housekeeping genes are assigned into expressed cluster:
+    housekeeping<-read.csv("../../../ref/Housekeeping/HK_gene_names.txt",header=FALSE)
+
+    housekeeping_in_expressed_cluster<-0
+    housekeeping_in_unexpressed_cluster<-0
+    data$Housekeeping<-rep("unknown",length(data$Gene))
+    for (top in housekeeping$V1) {
+        index<-which(data$Gene == top)
+        if (length(index) == 0) {
+            next
+        }
+        data$Housekeeping[index] <- "Housekeeping"
+    }
+    true_expressed<-which(data$Housekeeping == "Housekeeping" & data$Clustering == expressed_cluster)
+    false_unexpressed<-which(data$Housekeeping == "Housekeeping" & data$Clustering != expressed_cluster)
+
+    cols<-rep(rgb(0,0,0,0.2),length(data$Gene))
+    cols[true_expressed]<-"red"
+    cols[false_unexpressed]<-"green"
+    png(paste(output_dir,"/MergedControls_Broad_vs_Small_TSS_coverage_Housekeeping.png",sep=""))
+    plot(data$Broad.TSS.Coverage.Norm,data$Small.TSS.coverage,xlab="Broad TSS Coverage",ylab="Small TSS Coverage",xlim=c(0,1.5),col=cols,ylim=c(0,1.5))
+    dev.off()
+
+    gene_names<-data.frame(data$Gene[true_expressed], stringsAsFactors=FALSE)
+    names(gene_names)<-c("GeneName")
+    write.table(gene_names$GeneName, file=paste(output_dir,"/MergedControls_Housekeeping_in_expressed_cluster.txt",sep=""), quote=FALSE, row.names=FALSE, col.names=FALSE, sep="\n")
+
+    gene_names<-data.frame(data$Gene[false_unexpressed], stringsAsFactors=FALSE)
+    names(gene_names)<-c("GeneName")
+    write.table(gene_names$GeneName, file=paste(output_dir,"/MergedControls_Housekeeping_in_unexpressed_cluster.txt",sep=""), quote=FALSE, row.names=FALSE, col.names=FALSE, sep="\n")
+
+
+    write.table(t(c("Housekeeping (Eisenberg) in expressed cluster",length(true_expressed))), file=paste(output_dir,"/Statistics_Houskeeping.txt",sep=""), quote=FALSE, row.names=FALSE, col.names=FALSE, sep="\t")
+    write.table(t(c("Housekeeping (Eisenberg) in unexpressed cluster",length(false_unexpressed))), file=paste(output_dir,"/Statistics_Houskeeping.txt",sep=""), quote=FALSE, row.names=FALSE, col.names=FALSE, sep="\t",append=TRUE)
+}
 
 #############################################################################################################################################################################
 clustering_vs_rma<-function(data,output_dir){
@@ -408,6 +445,7 @@ analyze_and_plot_clustering(data,"4_Kmeans_explicit_centers")
 clustering_vs_fpkm(data,"4_Kmeans_explicit_centers")
 clustering_vs_rma(data,"4_Kmeans_explicit_centers")
 sensitivity_top1000(data,"4_Kmeans_explicit_centers")
+sensitivity_housekeeping(data,"4_Kmeans_explicit_centers")
 sensitivity_top100(data,"4_Kmeans_explicit_centers")
 ######################################################################################
 #5) Clustering with only one parameter K-means (Broad TSS coverage)
@@ -427,7 +465,31 @@ analyze_and_plot_clustering(data,"5_Kmeans_onlyBroadTSSCoverage")
 clustering_vs_fpkm(data,"5_Kmeans_onlyBroadTSSCoverage")
 clustering_vs_rma(data,"5_Kmeans_onlyBroadTSSCoverage")
 sensitivity_top1000(data,"5_Kmeans_onlyBroadTSSCoverage")
+sensitivity_housekeeping(data,"5_Kmeans_onlyBroadTSSCoverage")
 sensitivity_top100(data,"5_Kmeans_onlyBroadTSSCoverage")
+##########################################################################################
+#5.5) Clustering with two parameters K-means, use a priori cluster centers, weight Broad Coverage twice as much
+
+#K-means clustering using 2 parameters
+data_numeric<-rbind((data$Broad.TSS.Coverage.Norm*2),data$Small.TSS.coverage)
+expressed<-c(0.5,0.5)
+unexpressed<-c(1,1)
+starting_centers<-rbind(expressed,unexpressed)
+clustering<-kmeans(t(data_numeric),starting_centers)
+data$Clustering<-clustering$cluster
+
+#search for expressed cluster (should have lower mean coverage)
+expressed_cluster<-1
+if (clustering$centers[1,1] > clustering$centers[2,1]) {
+    expressed_cluster<-2
+}
+
+analyze_and_plot_clustering(data,"5_5_Kmeans_2xBroad_1xSmall")
+clustering_vs_fpkm(data,"5_5_Kmeans_2xBroad_1xSmall")
+clustering_vs_rma(data,"5_5_Kmeans_2xBroad_1xSmall")
+sensitivity_top1000(data,"5_5_Kmeans_2xBroad_1xSmall")
+sensitivity_housekeeping(data,"5_5_Kmeans_2xBroad_1xSmall")
+sensitivity_top100(data,"5_5_Kmeans_2xBroad_1xSmall")
 ##########################################################################################
 #6) Clustering with only one parameter K-means (Small TSS coverage)
 

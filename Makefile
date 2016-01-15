@@ -77,6 +77,38 @@ output/trimmed_reads/Merged_Male_Controls_rmdup_trimmed.bam:
 	samtools rmdup -s intermediate/trimmed/MergedMale/$$sample.bam intermediate/trimmed/MergedMale/$$sample.rmdup.bam;rm intermediate/trimmed/MergedMale/$$sample.bam;rm intermediate/trimmed/MergedMale/$$sample.bai;samtools index intermediate/trimmed/MergedMale/$$sample.rmdup.bam; done
 	samtools merge -f output/trimmed_reads/Merged_Male_Controls_rmdup_trimmed.bam intermediate/trimmed/MergedMale/*.rmdup.bam; samtools index output/trimmed_reads/Merged_Male_Controls_rmdup_trimmed.bam
 
+#B7_1 high coverage data
+output/trimmed_reads/B7_1_rmdup_trimmed.bam:
+	zcat data/B7_1_HighCov/B7_1_R1.fastq.gz | ./scripts/fastx_trimmer -Q33 -f 53 -l 113 -z -o ./intermediate/trimmed/MergedMale/B7_1.trimmed.fastq.gz
+	bwa mem -t 10 ~/RefSeq/hg19_070510/hg19 ./intermediate/trimmed/MergedMale/B7_1.trimmed.fastq.gz > intermediate/trimmed/MergedMale/B7_1.sam
+	rm ./intermediate/trimmed/MergedMale/B7_1.trimmed.fastq.gz
+	~/Downloads/jre1.7.0/bin/java -Xmx4g -Djava.io.tmpdir=/tmp \
+        -jar ~/Software/SNP_calling/picard-tools-1.128/picard.jar SortSam \
+        SO=coordinate INPUT=intermediate/trimmed/MergedMale/B7_1.sam OUTPUT=intermediate/trimmed/MergedMale/B7_1.bam \
+        VALIDATION_STRINGENCY=LENIENT CREATE_INDEX=true
+	rm intermediate/trimmed/MergedMale/B7_1.sam
+	samtools rmdup -s intermediate/trimmed/MergedMale/B7_1.bam output/trimmed_reads/B7_1_rmdup_trimmed.bam
+	rm intermediate/trimmed/MergedMale/B7_1.bam
+	rm intermediate/trimmed/MergedMale/B7_1.bai
+	samtools index output/trimmed_reads/B7_1_rmdup_trimmed.bam
+
+#B13_1 high coverage data
+output/trimmed_reads/B13_1_rmdup_trimmed.bam:
+	zcat data/B13_1_HighCov/B13_1_R1.fastq.gz | ./scripts/fastx_trimmer -Q33 -f 53 -l 113 -z -o ./intermediate/trimmed/MergedMale/B13_1.trimmed.fastq.gz
+	bwa mem -t 10 ~/RefSeq/hg19_070510/hg19 ./intermediate/trimmed/MergedMale/B13_1.trimmed.fastq.gz > intermediate/trimmed/MergedMale/B13_1.sam
+	rm ./intermediate/trimmed/MergedMale/B13_1.trimmed.fastq.gz
+	~/Downloads/jre1.7.0/bin/java -Xmx4g -Djava.io.tmpdir=/tmp \
+        -jar ~/Software/SNP_calling/picard-tools-1.128/picard.jar SortSam \
+        SO=coordinate INPUT=intermediate/trimmed/MergedMale/B13_1.sam OUTPUT=intermediate/trimmed/MergedMale/B13_1.bam \
+        VALIDATION_STRINGENCY=LENIENT CREATE_INDEX=true
+	rm intermediate/trimmed/MergedMale/B13_1.sam
+	samtools rmdup -s intermediate/trimmed/MergedMale/B13_1.bam output/trimmed_reads/B13_1_rmdup_trimmed.bam
+	rm intermediate/trimmed/MergedMale/B13_1.bam
+	rm intermediate/trimmed/MergedMale/B13_1.bai
+	samtools index output/trimmed_reads/B13_1_rmdup_trimmed.bam
+
+
+
 #Pool of female controls
 output/alignments/Merged_Female_Controls_rmdup.bam:
 	for i in ./data/FemaleControls/*.fastq.gz;do base=`basename $$i`;echo "working on $$i" ;sample=`echo $$base | sed s/\.fastq\.gz//`;bwa mem -t 10 ~/RefSeq/hg19_070510/hg19 $$i > intermediate/FemaleControls/$$sample.sam; \
@@ -314,6 +346,11 @@ output/TSS_coverage/All/Merged_Controls_all_tss.txt: ./scripts/analyze_TSS_cover
 	./scripts/analyze_TSS_coverage.py -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/All/Merged_Controls_all_tss.txt
 	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/All/Merged_Controls_all_tss.txt
 	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/All/Merged_Controls_all_tss.txt
+
+output/TSS_coverage/All/B7_1_all_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/B7_1_rmdup_trimmed.bam -t 10 > output/TSS_coverage/All/B7_1_all_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/All/B7_1_all_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/All/B7_1_all_tss.txt
 
 #3.2 Apoptosis genes
 output/TSS_coverage/Apoptosis_genes/Merged_Male_Controls_Apoptosis_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
@@ -766,6 +803,11 @@ output/TSS_coverage/Prostate_specific/Prostate_Cancer_Prostate_Specific_tss.txt:
 #
 # Calculate normalized TSS profiles
 # 	
+output/TSS_coverage/Normalized/B7_1_Top1000_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -gl ref/Plasma-RNASeq/Top1000_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/B7_1_rmdup_trimmed.bam -t 10 > output/TSS_coverage/Normalized/B7_1_Top1000_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Normalized/B7_1_Top1000_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Normalized/B7_1_Top1000_tss.txt
+
 output/TSS_coverage/Normalized/Merged_Male_Controls_Top1000_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
 	./scripts/analyze_TSS_coverage.py -norm -gl ref/Plasma-RNASeq/Top1000_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Male_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/Normalized/Merged_Male_Controls_Top1000_tss.txt
 	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Normalized/Merged_Male_Controls_Top1000_tss.txt
@@ -810,6 +852,11 @@ output/TSS_coverage/Normalized/MergedControls_Plasma_Bottom1000_tss.txt: ./scrip
 	./scripts/analyze_TSS_coverage.py -norm -gl ref/Plasma-RNASeq/Bottom1000_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/Normalized/MergedControls_Plasma_Bottom1000_tss.txt
 	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Normalized/MergedControls_Plasma_Bottom1000_tss.txt
 	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Normalized/MergedControls_Plasma_Bottom1000_tss.txt
+output/TSS_coverage/Normalized/B7_1_Bottom1000_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -gl ref/Plasma-RNASeq/Bottom1000_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/B7_1_rmdup_trimmed.bam -t 10 > output/TSS_coverage/Normalized/B7_1_Bottom1000_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Normalized/B7_1_Bottom1000_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Normalized/B7_1_Bottom1000_tss.txt
+
 output/TSS_coverage/Normalized/MergedControls_Plasma_Top100_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
 	./scripts/analyze_TSS_coverage.py -norm -gl ref/Plasma-RNASeq/Top100_NMonly.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/Normalized/MergedControls_Plasma_Top100_tss.txt
 	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Normalized/MergedControls_Plasma_Top100_tss.txt
@@ -861,9 +908,14 @@ output/TSS_coverage/Normalized/Dilution/MergedControls_Plasma_Top15001-17840_tss
 	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Normalized/Dilution/MergedControls_Plasma_Top15001-17840_tss.txt
 	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Normalized/Dilution/MergedControls_Plasma_Top15001-17840_tss.txt
 
+####################################################################################################################################
+#
+# Calculate normalized TSS profiles for housekeeping genes and supposedly unexpressed genes
+# 	
+
 #Household Genes
 output/TSS_coverage/Household_vs_Brain_Genes/MergedControls_Household_GTEx_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
-	./scripts/analyze_TSS_coverage.py -norm -gl ref/GTEx/Household_genes_FPKMover5_in_min50tissues.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/Household_vs_Brain_Genes/MergedControls_Household_GTEx_tss.txt
+	./scripts/analyze_TSS_coverage.py -norm -gl ref/GTEx/Household_genes_FPKMover5_in_min50tissues.txt -rg ref/refSeextended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/Household_vs_Brain_Genes/MergedControls_Household_GTEx_tss.txt
 	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Household_vs_Brain_Genes/MergedControls_Household_GTEx_tss.txt
 	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Household_vs_Brain_Genes/MergedControls_Household_GTEx_tss.txt
 output/TSS_coverage/Household_vs_Brain_Genes/MergedControls_Brain_GTEx_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
@@ -886,6 +938,41 @@ output/TSS_coverage/Household_vs_Brain_Genes/MergedControls_Housekeeping_Eisenbe
 	./scripts/analyze_TSS_coverage.py -norm -gl ref/Housekeeping/HK_gene_names.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam -t 10 > output/TSS_coverage/Household_vs_Brain_Genes/MergedControls_Housekeeping_Eisenberg_tss.txt
 	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Household_vs_Brain_Genes/MergedControls_Housekeeping_Eisenberg_tss.txt
 	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Household_vs_Brain_Genes/MergedControls_Housekeeping_Eisenberg_tss.txt
+
+
+output/TSS_coverage/Household_vs_Brain_Genes/B7_1_Brain_FANTOM5_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -tmp ./intermediate/Tssnormalized -gl ref/FANTOM5/Fantom5_brain_over5FPKM_Nonbrain_lower1FPKM.tsv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/B7_1_rmdup_trimmed.bam -t 5 > output/TSS_coverage/Household_vs_Brain_Genes/B7_1_Brain_FANTOM5_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Household_vs_Brain_Genes/B7_1_Brain_FANTOM5_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Household_vs_Brain_Genes/B7_1_Brain_FANTOM5_tss.txt
+output/TSS_coverage/Household_vs_Brain_Genes/B7_1_FANTOM5_unexpressed_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -tmp ./intermediate/Tssnormalized -gl ref/FANTOM5/Fantom5_all_lower0.1.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/B7_1_rmdup_trimmed.bam -t 10 > output/TSS_coverage/Household_vs_Brain_Genes/B7_1_FANTOM5_unexpressed_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Household_vs_Brain_Genes/B7_1_FANTOM5_unexpressed_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Household_vs_Brain_Genes/B7_1_FANTOM5_unexpressed_tss.txt
+output/TSS_coverage/Household_vs_Brain_Genes/B7_1_Housekeeping_Eisenberg_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -gl ref/Housekeeping/HK_gene_names.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/B7_1_rmdup_trimmed.bam -t 10 > output/TSS_coverage/Household_vs_Brain_Genes/B7_1_Housekeeping_Eisenberg_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Household_vs_Brain_Genes/B7_1_Housekeeping_Eisenberg_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Household_vs_Brain_Genes/B7_1_Housekeeping_Eisenberg_tss.txt
+output/TSS_coverage/Household_vs_Brain_Genes/B7_1_Household_FANTOM5_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -gl ref/FANTOM5/Household_genes_FPKMover5_in_min52tissues.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/B7_1_rmdup_trimmed.bam -t 10 > output/TSS_coverage/Household_vs_Brain_Genes/B7_1_Household_FANTOM5_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Household_vs_Brain_Genes/B7_1_Household_FANTOM5_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Household_vs_Brain_Genes/B7_1_Household_FANTOM5_tss.txt
+
+output/TSS_coverage/Household_vs_Brain_Genes/B13_1_Brain_FANTOM5_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -tmp ./intermediate/Tssnormalized -gl ref/FANTOM5/Fantom5_brain_over5FPKM_Nonbrain_lower1FPKM.tsv -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/B13_1_rmdup_trimmed.bam -t 5 > output/TSS_coverage/Household_vs_Brain_Genes/B13_1_Brain_FANTOM5_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Household_vs_Brain_Genes/B13_1_Brain_FANTOM5_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Household_vs_Brain_Genes/B13_1_Brain_FANTOM5_tss.txt
+output/TSS_coverage/Household_vs_Brain_Genes/B13_1_FANTOM5_unexpressed_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -tmp ./intermediate/Tssnormalized -gl ref/FANTOM5/Fantom5_all_lower0.1.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/B13_1_rmdup_trimmed.bam -t 10 > output/TSS_coverage/Household_vs_Brain_Genes/B13_1_FANTOM5_unexpressed_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Household_vs_Brain_Genes/B13_1_FANTOM5_unexpressed_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Household_vs_Brain_Genes/B13_1_FANTOM5_unexpressed_tss.txt
+output/TSS_coverage/Household_vs_Brain_Genes/B13_1_Housekeeping_Eisenberg_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -gl ref/Housekeeping/HK_gene_names.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/B13_1_rmdup_trimmed.bam -t 10 > output/TSS_coverage/Household_vs_Brain_Genes/B13_1_Housekeeping_Eisenberg_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Household_vs_Brain_Genes/B13_1_Housekeeping_Eisenberg_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Household_vs_Brain_Genes/B13_1_Housekeeping_Eisenberg_tss.txt
+output/TSS_coverage/Household_vs_Brain_Genes/B13_1_Household_FANTOM5_tss.txt: ./scripts/analyze_TSS_coverage.py ref/refSeq_extended_names_strand.bed
+	./scripts/analyze_TSS_coverage.py -norm -gl ref/FANTOM5/Household_genes_FPKMover5_in_min52tissues.txt -rg ref/refSeq_extended_names_strand.bed -m 0 -b output/trimmed_reads/B13_1_rmdup_trimmed.bam -t 10 > output/TSS_coverage/Household_vs_Brain_Genes/B13_1_Household_FANTOM5_tss.txt
+	cat scripts/create_TSS_plot_extended.R | R --slave --args output/TSS_coverage/Household_vs_Brain_Genes/B13_1_Household_FANTOM5_tss.txt
+	cat scripts/create_TSS_plot.R | R --slave --args output/TSS_coverage/Household_vs_Brain_Genes/B13_1_Household_FANTOM5_tss.txt
 
 ####################################################################################################################################
 #
@@ -1083,6 +1170,20 @@ output/PredictActiveGenes_All/Merged_Controls/MergedControls_prediction_data.csv
     -scov output/PredictActiveGenes_All/Merged_Controls/MergedControls_TSSCoverage_small_PlasmaRNASeq_NMonly.txt \
     -slope output/PredictActiveGenes_All/Merged_Controls/MergedControls_LowPass_Slope_PlasmaRNASeq_NMonly.txt \
     -bcovn output/PredictActiveGenes_All/Merged_Controls/MergedControls_TSSCoverage_PlasmaRNASeq_NMonly_normalized.txt
+
+####################################################################################################################################
+#  Try to predict whether single genes are expressed by using a neural network with 2000 inputs
+output/PredictActiveGenes_NeuralNetwork/training_houskeeping.txt:
+	./scripts/create_dataset.py -b output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam -t 10 -rg ./ref/refSeq_extended_names_strand.bed -gl ref/Housekeeping/HK_gene_names.txt -norm > output/PredictActiveGenes_NeuralNetwork/training_houskeeping.txt
+
+output/PredictActiveGenes_NeuralNetwork/random_bed_10000samples_200bp.txt: ref/hg19.chrom_sizes.txt /home/peter/RefSeq/hg19_070510/hg19_gaps.bed
+	for i in `seq 1 10000`;do echo -e "chr1\t0\t200";done > intermediate/dummy.bed
+	bedtools shuffle -excl /home/peter/RefSeq/hg19_070510/hg19_gaps.bed -noOverlapping -seed 1234 -i intermediate/dummy.bed -g ref/hg19.chrom_sizes.txt > ref/random_bed_10000samples_200bp.txt
+
+output/PredictActiveGenes_NeuralNetwork/training_random.txt: output/PredictActiveGenes_NeuralNetwork/random_bed_10000samples_200bp.txt
+	./scripts/create_dataset_random.py -pos output/PredictActiveGenes_NeuralNetwork/random_bed_10000samples_200bp.txt -norm -b output/trimmed_reads/Merged_Controls_rmdup_trimmed.bam -t 5 > output/PredictActiveGenes_NeuralNetwork/training_random.txt
+
+
 
 ####################################################################################################################################
 #
